@@ -1,0 +1,11 @@
+{
+	"format_version": "1.9.0",
+	"credit": "Igucheese",
+	"ambientocclusion": false,
+	"shade": false,
+	"texture_size": [64, 64],
+	"textures": {
+		"particle": "tailormade:block/tailor_mannequin"
+	},
+	"elements": []
+}

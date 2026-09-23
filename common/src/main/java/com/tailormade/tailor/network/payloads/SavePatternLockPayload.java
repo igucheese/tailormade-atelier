@@ -1,0 +1,71 @@
+package com.tailormade.tailor.network.payloads;
+
+import com.tailormade.tailor.data.DesignData;
+import com.tailormade.tailor.data.records.DesignDataRecord;
+import com.tailormade.tailor.utils.ChatService;
+import com.tailormade.tailor.utils.SoundService;
+import dev.architectury.networking.NetworkManager;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import java.util.UUID;
+
+import static com.tailormade.tailor.Tailormade.MODID;
+
+public record SavePatternLockPayload(UUID patternId, boolean isLocked) implements CustomPacketPayload {
+    public static final ResourceLocation ID =
+            ResourceLocation.fromNamespaceAndPath(MODID, "save_pattern_locked_status");
+
+    public static final Type<SavePatternLockPayload> TYPE =
+            new Type<>(ID);
+
+    public static final StreamCodec<FriendlyByteBuf, SavePatternLockPayload> STREAM_CODEC =
+            StreamCodec.of(
+                    SavePatternLockPayload::encode,
+                    SavePatternLockPayload::decode
+            );
+
+    private static void encode(FriendlyByteBuf buf, SavePatternLockPayload packet) {
+        buf.writeUUID(packet.patternId);
+        buf.writeBoolean(packet.isLocked());
+    }
+
+    private static SavePatternLockPayload decode(FriendlyByteBuf buf) {
+        UUID patternId = buf.readUUID();
+        boolean isLocked = buf.readBoolean();
+        return new SavePatternLockPayload(patternId, isLocked);
+    }
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
+    }
+
+    public static void handle(SavePatternLockPayload payload, NetworkManager.PacketContext ctx) {
+        ctx.queue(() -> {
+            if (!(ctx.getPlayer() instanceof ServerPlayer player)) return;
+            // ロックステータスを保存する
+            ServerLevel level = (ServerLevel) player.level();
+            DesignDataRecord design = DesignData.get(level).get(payload.patternId());
+            if (design == null) { return; }
+            // ロックされていて、かつ player = design.player ではない場合は弾く
+            if (design.isLocked() && !player.getUUID().equals(design.userId())) {
+                ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.guarded"), true);
+                return;
+            }
+            DesignDataRecord newDesign = payload.isLocked() ? design.withLocked() : design.withUnlocked();
+            DesignData.get(level).updateDesign(payload.patternId(), newDesign);
+
+            String messageId = payload.isLocked() ? "locked" : "unlocked";
+            ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager." + messageId), true);
+            NetworkManager.sendToPlayers(level.players(), new SyncDesignPayload(payload.patternId(), newDesign));
+
+            SoundService.playSound(player, SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0F);
+        });
+    }
+}
