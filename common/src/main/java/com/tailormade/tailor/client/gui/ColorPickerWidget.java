@@ -1,0 +1,186 @@
+package com.tailormade.tailor.client.gui;
+
+import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.resources.ResourceLocation;
+
+import java.awt.*;
+
+public class ColorPickerWidget {
+
+    private static final int SIZE = 16;
+    private static int SIZE_X = 16;
+    private static int SIZE_Y = 16;
+
+    private final int x;
+    private final int y;
+
+    private int baseColor = 0xFFFFFF00;
+    private int selectedColor = 0xFFFFFFFF;
+
+    private DynamicTexture texture;
+    private ResourceLocation textureLocation;
+
+    private int cursorX = SIZE - 1;
+    private int cursorY = 0;
+
+    public ColorPickerWidget(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public void setW(int w) {
+        SIZE_X = w;
+    }
+    public void setH(int h) {
+        SIZE_Y = h;
+    }
+
+    public void init() {
+        if (texture != null) texture.close();
+        texture = new DynamicTexture(SIZE_X, SIZE_Y, true);
+        textureLocation = Minecraft.getInstance()
+                .getTextureManager()
+                .register("tailormade_colorpicker", texture);
+        rebuildTexture();
+    }
+
+    public void setBaseColor(int argb) {
+        this.baseColor = argb;
+        rebuildTexture();
+        selectedColor = sampleColor(cursorX, cursorY);
+    }
+
+    public void setSelectedColor(int argb) {
+        int r = (argb >> 16) & 0xFF;
+        int g = (argb >>  8) & 0xFF;
+        int b =  argb & 0xFF;
+
+        float[] hsb = new float[3];
+        Color.RGBtoHSB(r, g, b, hsb);
+
+        float h = hsb[0];
+        float s = hsb[1];
+        float bv = hsb[2];
+
+        int baseArgb = Color.HSBtoRGB(h, 1.0f, 1.0f);
+        this.baseColor = 0xFF000000 | (baseArgb & 0x00FFFFFF);
+
+        // 彩度・明度からカーソル位置を復元する
+        this.cursorX = Math.clamp((int)(s * (SIZE_X - 1)), 0, SIZE_X - 1);
+        this.cursorY = Math.clamp((int)((1.0f - bv) * (SIZE_Y - 1)), 0, SIZE_Y - 1);
+
+        this.selectedColor = argb & 0xFF000000 | (argb & 0x00FFFFFF);
+
+        rebuildTexture();
+    }
+
+    private void rebuildTexture() {
+        NativeImage img = texture.getPixels();
+        if (img == null) return;
+
+        int br = (baseColor >> 16) & 0xFF;
+        int bg = (baseColor >>  8) & 0xFF;
+        int bb =  baseColor & 0xFF;
+
+        for (int py = 0; py < SIZE_Y; py++) {
+            float brightness = 1.0f - (float) py / (SIZE_Y - 1);
+
+            for (int px = 0; px < SIZE_X; px++) {
+                float saturation = (float) px / (SIZE_X - 1);
+
+                int r = (int)((1.0f - saturation) * 255 + saturation * br);
+                int g = (int)((1.0f - saturation) * 255 + saturation * bg);
+                int b = (int)((1.0f - saturation) * 255 + saturation * bb);
+
+                r = (int)(r * brightness);
+                g = (int)(g * brightness);
+                b = (int)(b * brightness);
+
+                img.setPixelRGBA(px, py, (0xFF << 24) | (b << 16) | (g << 8) | r);
+            }
+        }
+        texture.upload();
+    }
+
+    private int sampleColor(int px, int py) {
+        int br = (baseColor >> 16) & 0xFF;
+        int bg = (baseColor >>  8) & 0xFF;
+        int bb =  baseColor & 0xFF;
+
+        float brightness = 1.0f - (float) py / (SIZE_Y - 1);
+        float saturation = (float) px / (SIZE_X - 1);
+
+        int r = (int)((1.0f - saturation) * 255 + saturation * br);
+        int g = (int)((1.0f - saturation) * 255 + saturation * bg);
+        int b = (int)((1.0f - saturation) * 255 + saturation * bb);
+
+        r = Math.clamp((int)(r * brightness), 0, 255);
+        g = Math.clamp((int)(g * brightness), 0, 255);
+        b = Math.clamp((int)(b * brightness), 0, 255);
+
+        return 0xFF000000 | (r << 16) | (g << 8) | b;
+    }
+
+    public void render(GuiGraphics g, int mouseX, int mouseY) {
+        if (textureLocation == null) return;
+
+        RenderSystem.enableBlend();
+        g.blit(textureLocation, x, y, 0, 0, SIZE_X, SIZE_Y, SIZE_X, SIZE_Y);
+        RenderSystem.disableBlend();
+
+        // カーソル点を描画しておく！
+        int cx = x + cursorX;
+        int cy = y + cursorY;
+        g.fill(cx, cy, cx + 1, cy + 1, 0xFFFFFFFF);
+    }
+
+    public boolean mouseClicked(double mx, double my) {
+        if (!inBounds(mx, my)) return false;
+        pick((int)(mx - x), (int)(my - y));
+        return true;
+    }
+
+    public boolean mouseDragged(double mx, double my) {
+        if (!isDragging) return false;
+        int px = Math.clamp((int)(mx - x), 0, SIZE_X - 1);
+        int py = Math.clamp((int)(my - y), 0, SIZE_Y - 1);
+        pick(px, py);
+        return true;
+    }
+
+    private boolean isDragging = false;
+
+    public boolean mousePressed(double mx, double my) {
+        if (!inBounds(mx, my)) return false;
+        isDragging = true;
+        pick((int)(mx - x), (int)(my - y));
+        return true;
+    }
+
+    public void mouseReleased() {
+        isDragging = false;
+    }
+
+    private void pick(int px, int py) {
+        cursorX = Math.clamp(px, 0, SIZE_X - 1);
+        cursorY = Math.clamp(py, 0, SIZE_Y - 1);
+        selectedColor = sampleColor(cursorX, cursorY);
+    }
+
+    private boolean inBounds(double mx, double my) {
+        return mx >= x && mx < x + SIZE_X && my >= y && my < y + SIZE_Y;
+    }
+
+    public int getSelectedColor() { return selectedColor; }
+
+    public void close() {
+        if (texture != null) {
+            texture.close();
+            texture = null;
+        }
+    }
+}

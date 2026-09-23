@@ -1,0 +1,80 @@
+package com.tailormade.tailor.events;
+
+import com.tailormade.tailor.Tailormade;
+import com.tailormade.tailor.data.*;
+import com.tailormade.tailor.data.records.*;
+import com.tailormade.tailor.network.payloads.*;
+import com.tailormade.tailor.utils.GeneralService;
+import dev.architectury.networking.NetworkManager;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+public class SyncDataLayers {
+    public static void addMeIfAbsent(ServerPlayer player) {
+        GlobalPlayer storedPlayer = GlobalPlayerSavedData.get(player.serverLevel()).get(player.getUUID());
+        if (storedPlayer == null) {
+            GlobalPlayer toBeStored = GeneralService.composeNewPlayer(player.getUUID(), player.getName().getString());
+            GlobalPlayerSavedData.get(player.serverLevel()).savePlayer(toBeStored);
+        }
+    }
+
+    public static void syncSkinLayer(ServerPlayer player) {
+        Collection<PowderRoomSavedData.SkinDataRecord> skins = PowderRoomSavedData.get((ServerLevel) player.level()).getAll();
+        for (PowderRoomSavedData.SkinDataRecord record : skins) {
+            PixelData skin = record.pixelData();
+            if (skin.getPixels() != null) {
+                Tailormade.LOGGER.info("[SYNC_SKINS] Sync Player's Skin: " + record.uuid());
+                NetworkManager.sendToPlayer(player, new SyncSkinLayerPayload(record.uuid(), skin.getPixels()));
+            } else {
+                Tailormade.LOGGER.info("[SYNC_SKINS] Sync Player's Skin has been skipped.");
+            }
+        }
+    }
+
+    public static void syncUnderwearLayer(ServerPlayer player) {
+        Collection<WardrobeSavedData.UnderwearRecord> settings = WardrobeSavedData.get((ServerLevel) player.level()).getAll();
+        for (WardrobeSavedData.UnderwearRecord record : settings) {
+            UnderwearSetting setting = record.settings();
+            Tailormade.LOGGER.info("[SYNC_UNDERWEAR] Sync Player's Underwear: " + record.uuid() + " body: " + setting);
+            NetworkManager.sendToPlayer(player, new SyncUnderwearPayload(record.uuid(), setting));
+        }
+    }
+
+    public static void syncDesignData(ServerPlayer player) {
+        Tailormade.LOGGER.info("[SYNC_DESIGN] Sync All Masterpieces!");
+        DesignData data = DesignData.get(player.serverLevel());
+        Collection<DesignDataRecord> designs = data.index();
+//        PacketDistributor.sendToPlayer(player, new SyncAllDesignsPayload(designs)); // いずれこうしたいね
+        for (DesignDataRecord design : designs) {
+            Tailormade.LOGGER.info("[SYNC_DESIGN] " + design.uuid() + ", name: " + design.name() + ", data: " + design.pixelData());
+            NetworkManager.sendToPlayer(player, new SyncDesignPayload(design.uuid(), design));
+        }
+        Tailormade.LOGGER.info("[SYNC_DESIGN] " + designs.size() + " designs have been cached.");
+    }
+
+    public static void syncGlobalPlayers(ServerPlayer player) {
+        Collection<GlobalPlayer> players = GlobalPlayerSavedData.get(player.serverLevel()).index();
+        for (GlobalPlayer p: players) {
+            NetworkManager.sendToPlayer(player, new SyncGlobalPlayerPayload(p));
+        }
+        Tailormade.LOGGER.info("[SYNC_PLAYERS] " + players.size() + " players' data have been cached.");
+    }
+
+    public static void syncDesignTemplates(ServerPlayer player) {
+        Map<String, DesignTemplate> templates = TemplateRegistry.getAll();
+        for (DesignTemplate t: templates.values()) {
+            NetworkManager.sendToPlayer(player, new SyncDesignTemplatePayload(t));
+        }
+        Tailormade.LOGGER.info("[SYNC_TEMPLATES] " + templates.size() + " design templates have been cached.");
+    }
+
+    public static void syncCatalogs(ServerPlayer player) {
+        List<CatalogData> catalogs = CatalogSavedData.get(player.serverLevel()).getAll();
+        NetworkManager.sendToPlayer(player, new SyncAllCatalogsPayload(catalogs));
+        Tailormade.LOGGER.info("[SYNC_CATALOGS] " + catalogs.size() + " catalogs have been cached.");
+    }
+}
