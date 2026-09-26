@@ -1,15 +1,14 @@
 package com.tailormade.tailor.events;
 
 import com.tailormade.tailor.Tailormade;
+import com.tailormade.tailor.commands.TailormadeCommandRegistry;
 import com.tailormade.tailor.registries.ModDataComponents;
 import com.tailormade.tailor.registries.ModItems;
 import com.tailormade.tailor.utils.CatalogService;
 import com.tailormade.tailor.utils.InitialTemplateLoader;
 import com.tailormade.tailor.utils.files.TemplateLoader;
 import dev.architectury.event.EventResult;
-import dev.architectury.event.events.common.InteractionEvent;
-import dev.architectury.event.events.common.LifecycleEvent;
-import dev.architectury.event.events.common.PlayerEvent;
+import dev.architectury.event.events.common.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -30,9 +29,9 @@ public class ModServerEvents {
         LifecycleEvent.SERVER_STARTING.register(ModServerEvents::onServerStarting);
         InteractionEvent.RIGHT_CLICK_BLOCK.register(ModServerEvents::onRightClickBlock);
 
-        // CommandRegistrationEvent.EVENT.register((dispatcher, registryAccess, selection) -> {
-        //     Command.register(dispatcher);
-        // });
+        CommandRegistrationEvent.EVENT.register((dispatcher, registryAccess, selection) -> {
+            TailormadeCommandRegistry.registerCommands(dispatcher);
+        });
     }
 
     private static void onPlayerLogin(ServerPlayer player) {
@@ -64,17 +63,14 @@ public class ModServerEvents {
         var level = player.level();
 
         if (level.getBlockEntity(pos) instanceof LecternBlockEntity lectern) {
-            System.out.println("[CHECK][onRightClickBlock] this is lectern!");
             ItemStack book = lectern.getBook();
 
             if (book.is(ModItems.CATALOG_BOOK.get())) {
-                System.out.println("[CHECK][onRightClickBlock] this is catalog!");
                 String catalogIdStr = book.get(ModDataComponents.CATALOG_ID.get());
                 if (catalogIdStr == null || catalogIdStr.isBlank()) return EventResult.pass();
                 UUID catalogId = UUID.fromString(catalogIdStr);
 
                 if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
-                    System.out.println("[CHECK][onRightClickBlock] let's open!");
                     CatalogService.openClientScreen(serverPlayer, catalogId, true, pos);
                 }
                 return EventResult.interruptFalse();
