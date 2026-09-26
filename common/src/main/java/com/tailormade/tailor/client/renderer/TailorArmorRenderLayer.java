@@ -10,6 +10,9 @@ import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
+
+import java.util.Objects;
 
 public class TailorArmorRenderLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
     private static ResourceLocation previewOverride = null;
@@ -17,6 +20,7 @@ public class TailorArmorRenderLayer extends RenderLayer<AbstractClientPlayer, Pl
     public static void setPreviewOverride(ResourceLocation tex) { previewOverride = tex; }
     public static ResourceLocation getPreviewOverride() { return previewOverride; }
     public static void clearPreviewOverride() { previewOverride = null; }
+    private String lastPatternHash = null;
 
     public TailorArmorRenderLayer(
         RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
@@ -36,7 +40,6 @@ public class TailorArmorRenderLayer extends RenderLayer<AbstractClientPlayer, Pl
                 OverlayTexture.NO_OVERLAY
         );
     }
-
     private ResourceLocation resolveTexture(AbstractClientPlayer player) {
         if (previewOverride != null) return previewOverride;
 
