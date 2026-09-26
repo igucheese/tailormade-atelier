@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${mod_version}",
+  "name": "${mod_name}",
+  "description": "Express your style and customize your clothing freely with the Tailormade Mod!",
+  "authors": ["Igucheese"],
+  "contact": {
+    "homepage": "https://github.com/igucheese/tailormade-atelier",
+    "issues": "https://github.com/igucheese/tailormade-atelier/issues/"
+  },
+  "license": "${mod_license}",
+  "icon": "title.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.tailormade.tailor.fabric.TailormadeFabric"
+    ],
+    "client": [
+      "com.tailormade.tailor.fabric.client.TailormadeFabricClient"
+    ]
+  },
+  "accessWidener": "tailormade.accesswidener",
+  "mixins": [],
+  "depends": {
+    "fabricloader": ">=${fabric_loader_version}",
+    "minecraft": "${fabric_minecraft_version_range}",
+    "java": ">=21",
+    "architectury": "*"
+  }
+}

@@ -1,6 +1,7 @@
 package com.tailormade.tailor.client;
 
 import com.tailormade.tailor.client.screen.CatalogScreen;
+import com.tailormade.tailor.client.screen.DesignerScreen;
 import com.tailormade.tailor.client.screen.PowderRoomScreen;
 import com.tailormade.tailor.client.screen.WardrobeScreen;
 import com.tailormade.tailor.entities.blockentities.MannequinEntity;
@@ -47,5 +48,12 @@ public class ClientHooks {
 
     public static void openCatalogScreen(UUID catalogId, boolean isFromLectern, BlockPos pos) {
         Minecraft.getInstance().setScreen(new CatalogScreen(catalogId, isFromLectern, pos));
+    }
+
+    public static void closeDesignScreen() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player != null && minecraft.screen instanceof DesignerScreen) {
+            minecraft.player.closeContainer();
+        }
     }
 }

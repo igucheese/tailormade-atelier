@@ -5,6 +5,7 @@ import com.tailormade.tailor.client.menu.DesignerMenu;
 import com.tailormade.tailor.data.DesignData;
 import com.tailormade.tailor.data.records.DesignDataRecord;
 import com.tailormade.tailor.entities.items.PatternItem;
+import com.tailormade.tailor.network.payloads.CloseDesignScreenPayload;
 import com.tailormade.tailor.network.payloads.SaveDesignPayload;
 import com.tailormade.tailor.network.payloads.SyncDesignPayload;
 import com.tailormade.tailor.registries.ModDataComponents;
@@ -69,13 +70,11 @@ public class SaveDesignPayloadHandler {
 
         // 保存実行
         DesignDataRecord newDesign = PatternDataSaver.saveDeign(level, stack, packet.pixelData(), packet.layers(), patternItem, player.getUUID(), name, packet.isSlim());
-        System.out.println("[CHECK][NEW DESIGN] " + newDesign);
         if (newDesign != null) {
             player.containerMenu.broadcastChanges();
             ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.design_saved"), true);
             NetworkManager.sendToPlayers(level.players(), new SyncDesignPayload(newDesign.uuid(), newDesign));
-        } else {
-            ChatService.showMessage(player, Component.literal("だめでしたあ"), false);
+            NetworkManager.sendToPlayer(player, new CloseDesignScreenPayload());
         }
     }
 }

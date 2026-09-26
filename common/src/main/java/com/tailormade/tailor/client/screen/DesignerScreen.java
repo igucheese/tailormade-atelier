@@ -47,7 +47,7 @@ import static com.tailormade.tailor.data.Constants.TRANSPARENT;
 
 public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private static final ResourceLocation GUI_TEXTURE =
-            ResourceLocation.fromNamespaceAndPath("tailormade", "textures/gui/designer_gui_2.png");
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/designer_gui_2.png");
     private static final ResourceLocation BRUSH_1_ICON =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/brush_1.png");
     private static final ResourceLocation BRUSH_2_ICON =
@@ -1392,7 +1392,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         );
 
         hasUnsavedChanges = false;
-        this.onClose();
+//        this.onClose();
     }
 
     @Override
