@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" factoryName="Application" name="Minecraft Client (:fabric)" type="Application">
+    <option name="MAIN_CLASS_NAME" value="dev.architectury.transformer.TransformerRuntime"/>
+    <module name="tailormade.fabric.main"/>
+    <option name="PROGRAM_PARAMETERS" value=""/>
+    <option name="VM_PARAMETERS" value="&quot;-Darchitectury.main.class=D:\MyWorks\Minecraft MOD\tailormade-1.21.1-neoforge-template\fabric\.gradle\architectury\.main_class&quot; &quot;-Darchitectury.runtime.transformer=D:\MyWorks\Minecraft MOD\tailormade-1.21.1-neoforge-template\fabric\.gradle\architectury\.transforms&quot; &quot;-Darchitectury.properties=D:\MyWorks\Minecraft MOD\tailormade-1.21.1-neoforge-template\fabric\.gradle\architectury\.properties&quot; -Djdk.attach.allowAttachSelf=true &quot;-javaagent:D:\MyWorks\Minecraft MOD\tailormade-1.21.1-neoforge-template\.gradle\architectury\architectury-transformer-agent.jar&quot; -Dfabric.dli.config=D:\MyWorks\Minecraft@@0020MOD\tailormade-1.21.1-neoforge-template\.gradle\loom-cache\projects\fabric\launch.cfg -Dfabric.dli.env=client -Dfabric.dli.main=net.fabricmc.loader.impl.launch.knot.KnotClient -XX:StackShadowPages=32"/>
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/fabric\run/"/>
+    <method v="2">
+      <option enabled="true" name="Make"/>
+    </method>
+    <envs>
+
+    </envs>
+    <shortenClasspath name="ARGS_FILE"/>
+  <classpathModifications/></configuration>
+</component>

@@ -60,7 +60,7 @@ public final class TailormadeCommandRegistry {
         ServerLevel level = source.getLevel();
         Collection<DesignDataRecord> designs = DesignData.get(level).index();
         for (DesignDataRecord d: designs) {
-            source.sendSuccess(() -> Component.translatable("command.tailormade.updateAllData.listed", d.name(), d.uuid(), d.designerId()), true);
+            source.sendSuccess(() -> Component.translatable("command.tailormade.updateAllData.listed", d.name(), d.uuid().toString(), d.designerId().toString()), true);
         }
         return 1;
     }
