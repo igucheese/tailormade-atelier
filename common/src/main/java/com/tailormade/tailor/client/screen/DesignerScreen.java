@@ -18,6 +18,7 @@ import com.tailormade.tailor.data.records.PixelData;
 import com.tailormade.tailor.entities.items.PatternItem;
 import com.tailormade.tailor.network.payloads.SaveDesignPayload;
 import com.tailormade.tailor.registries.ModDataComponents;
+import com.tailormade.tailor.registries.ModItems;
 import com.tailormade.tailor.utils.DesignAccessor;
 import com.tailormade.tailor.utils.editor.ColorService;
 import com.tailormade.tailor.utils.editor.LayerService;
@@ -35,6 +36,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -48,18 +50,8 @@ import static com.tailormade.tailor.data.Constants.TRANSPARENT;
 public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private static final ResourceLocation GUI_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/designer_gui_2.png");
-    private static final ResourceLocation BRUSH_1_ICON =
-            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/brush_1.png");
-    private static final ResourceLocation BRUSH_2_ICON =
-            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/brush_2.png");
-    private static final ResourceLocation BRUSH_3_ICON =
-            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/brush_3.png");
-    private static final ResourceLocation BUCKET_ICON =
-            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/bucket.png");
-    private static final ResourceLocation EYEDROPPER_ICON =
-            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/eyedropper.png");
-    private static final ResourceLocation ERASER_ICON =
-            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/eraser.png");
+    private static final ResourceLocation OVERLAY_SELECT_PART =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/designer_gui_select_overlay.png");
     private static final ResourceLocation LAYER_ICON =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/layer_button.png");
     private static final ResourceLocation LAYER_ADD_ICON =
@@ -98,6 +90,15 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/ebb_slim_a.png");
     private static final ResourceLocation SEG_BUTTON_N =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/ebb_off_a.png");
+
+    private static final ResourceLocation PATTERN_TBN_HAT =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/pattern_select_btn_hat.png");
+    private static final ResourceLocation PATTERN_TBN_SHIRT =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/pattern_select_btn_shirt.png");
+    private static final ResourceLocation PATTERN_TBN_PANTS =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/pattern_select_btn_pants.png");
+    private static final ResourceLocation PATTERN_TBN_BOOTS =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/pattern_select_btn_boots.png");
 
     private static final int GUI_W = 384;
     private static final int GUI_H = 224;
@@ -154,6 +155,14 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     private boolean draggingPreview = false;
     private double dragStartX = -1;
     private double dragStartY = -1;
+
+    // 型紙選択
+    private PatternType patternType = PatternType.CHEST;
+    private boolean isSelectPatternMode = false;
+    private final int PATTERN_BTN_W = 64;
+    private final int PATTERN_BTN_H = 16;
+    private final int PATTERN_BTN_X = 88;
+    private final int PATTERN_BTN_Y = 48;
 
     // 範囲選択用
     private int moveOffsetX = 0;
@@ -252,8 +261,23 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         ItemStack mainStack = menu.getPatternContainer().getItem(DesignerMenu.MAIN_SLOT);
         if (!ItemStack.matches(this.lastPatternStack, mainStack)) {
             this.lastPatternStack = mainStack.copy();
-            this.refreshCanvas();
+            if (!mainStack.isEmpty() && mainStack.is(ModItems.PATTERN_DEFAULT.get())) {
+                this.preparePattern();
+            } else {
+                this.refreshCanvas();
+            }
         }
+    }
+
+    private void preparePattern() {
+        this.isSelectPatternMode = true;
+    }
+
+    private void setPatternType(PatternType type) {
+        this.patternType = type;
+
+        this.isSelectPatternMode = false;
+        refreshCanvas();
     }
 
     private void refreshCanvas() {
@@ -263,9 +287,11 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             if (canvas != null) { canvas.close(); canvas = null; }
             return;
         }
+        if (patternItem.getPatternType(mainStack) != null) {
+            this.patternType = patternItem.getPatternType(mainStack);
+        }
 
-        PatternType type = patternItem.getPatternType(mainStack);
-        int[] size = type.getTextureSize();
+        int[] size = patternType.getTextureSize();
 
         if (canvas != null && canvas.getWidth() == size[0] && canvas.getHeight() == size[1]) return;
         if (canvas != null) canvas.close();
@@ -298,6 +324,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
 
         // データ系の反映
         DesignDataRecord record = patternItem.getDesignData(mainStack);
+        this.nameInput.setValue("");
         if (record != null) {
             this.nameInput.setValue(record.name());
             isSlim = record.isSlim();
@@ -321,6 +348,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         renderLayers(g);
         renderPopups(g, mouseX, mouseY, partialTick);
         setMouseCursor(mouseX, mouseY);
+        renderSelectOverlay(g);
 
         if (showUnsavedWarning) renderUnsavedWarning(g);
         renderTooltip(g, mouseX, mouseY);
@@ -347,6 +375,22 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
         g.blit(GUI_TEXTURE, x, y, GUI_OFFSET_X, GUI_OFFSET_Y, imageWidth, imageHeight, 512, 512);
+    }
+
+    private void renderSelectOverlay(GuiGraphics g) {
+        if (!this.isSelectPatternMode) return;
+
+        int x = (this.width - this.imageWidth) / 2;
+        int y = (this.height - this.imageHeight) / 2;
+        g.blit(OVERLAY_SELECT_PART, x, y, GUI_OFFSET_X, GUI_OFFSET_Y, imageWidth, imageHeight, 512, 512);
+
+        // ボタン
+        int startX = leftPos + PATTERN_BTN_X;
+        int startY = topPos + PATTERN_BTN_Y;
+        g.blit(PATTERN_TBN_HAT, startX, startY, 0, 0, PATTERN_BTN_W, PATTERN_BTN_H, PATTERN_BTN_W, PATTERN_BTN_H);
+        g.blit(PATTERN_TBN_SHIRT, startX, startY + 24, 0, 0, PATTERN_BTN_W, PATTERN_BTN_H, PATTERN_BTN_W, PATTERN_BTN_H);
+        g.blit(PATTERN_TBN_PANTS, startX, startY + 48, 0, 0, PATTERN_BTN_W, PATTERN_BTN_H, PATTERN_BTN_W, PATTERN_BTN_H);
+        g.blit(PATTERN_TBN_BOOTS, startX, startY + 72, 0, 0, PATTERN_BTN_W, PATTERN_BTN_H, PATTERN_BTN_W, PATTERN_BTN_H);
     }
 
     private void renderToolabr(GuiGraphics g)
@@ -467,6 +511,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
     }
 
     private void renderEditor(GuiGraphics g, int mouseX, int mouseY) {
+        if (this.isSelectPatternMode) return;
         if (canvas == null) {
             g.drawCenteredString(font, Component.translatable("gui.tailormade.designer.start").getString(), leftPos + ED_X + ED_W / 2, topPos + ED_Y + ED_H / 2 - 4, 0xFFFFFFFF);
             return;
@@ -569,8 +614,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         ItemStack mainStack = menu.getPatternContainer().getItem(DesignerMenu.MAIN_SLOT);
         if (mainStack.isEmpty() || !(mainStack.getItem() instanceof PatternItem patternItem)) return;
 
-        PatternType type = patternItem.getPatternType(mainStack);
-        PatternType.CanvasSegment[] segments = type.getSegments();
+        PatternType.CanvasSegment[] segments = patternType.getSegments();
         if (segments.length <= 1) return;
 
         Set<Integer> rowBoundaries = new TreeSet<>();
@@ -583,15 +627,15 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         for (int cy : rowBoundaries) {
             if (cy == 0) continue;
             int ly = renderY + (int)(cy * scale);
-            g.fill(renderX, ly, renderX + (int)(type.getCanvasW() * scale), ly + 1, 0xAAFFFF00);
+            g.fill(renderX, ly, renderX + (int)(patternType.getCanvasW() * scale), ly + 1, 0xAAFFFF00);
         }
         for (int cx : colBoundaries) {
             if (cx == 0) continue;
             int lx = renderX + (int)(cx * scale);
-            g.fill(lx, renderY, lx + 1, renderY + (int)(type.getCanvasH() * scale), 0xAAFFFF00);
+            g.fill(lx, renderY, lx + 1, renderY + (int)(patternType.getCanvasH() * scale), 0xAAFFFF00);
         }
 
-        String[][] labels = segmentLabels2D(type);
+        String[][] labels = segmentLabels2D(patternType);
         if (labels != null) {
             for (PatternType.CanvasSegment seg : segments) {
                 int col = getColIndex(segments, seg.canvasX());
@@ -703,7 +747,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             ItemStack mainStack = menu.getPatternContainer().getItem(DesignerMenu.MAIN_SLOT);
             if (!mainStack.isEmpty() && mainStack.getItem() instanceof PatternItem patternItem) {
                 PatternType type = patternItem.getPatternType(mainStack);
-                map.put(type, canvas.getPixels()); // 保存前のライブデータ
+                map.put(patternType, canvas.getPixels()); // 保存前のライブデータ
             }
         }
 
@@ -774,6 +818,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
+        if (button == 0 && this.isSelectPatternMode) return handleSelectPattern(mx, my);
         if (showUnsavedWarning) return handleWarningClick(mx, my);
         if (popUpMode != null) {
             if (popUpMode.equals("template")) {
@@ -1121,6 +1166,27 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         TOOL_MODE = mode;
     }
 
+    private boolean handleSelectPattern(double mx, double my) {
+        int startX = leftPos + PATTERN_BTN_X;
+        int startY = topPos + PATTERN_BTN_Y;
+
+        if (inBox(mx, my, startX, startY, PATTERN_BTN_W, PATTERN_BTN_H)) {
+            // hat
+            this.setPatternType(PatternType.HEAD);
+        } else if (inBox(mx, my, startX, startY + 24, PATTERN_BTN_W, PATTERN_BTN_H)) {
+            // shirt
+            this.setPatternType(PatternType.CHEST);
+        } else if (inBox(mx, my, startX, startY + 48, PATTERN_BTN_W, PATTERN_BTN_H)) {
+            // pants
+            this.setPatternType(PatternType.LEGS);
+        } else if (inBox(mx, my, startX, startY + 72, PATTERN_BTN_W, PATTERN_BTN_H)) {
+            // boots
+            this.setPatternType(PatternType.FEET);
+        }
+
+        return true;
+    }
+
     private boolean handleWarningClick(double mx, double my) {
         int wx = leftPos + imageWidth  / 2 - 64;
         int wy = topPos + imageHeight / 2 - 22;
@@ -1342,7 +1408,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             return;
         }
         PatternType type = patternItem.getPatternType(mainStack);
-        String typeName = type.getType();
+        String typeName = patternType.getType();
 
         templates = DesignTemplateCache.getByType(typeName);
 
@@ -1384,6 +1450,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         NetworkManager.sendToServer(
                 new SaveDesignPayload(
                         DesignerMenu.MAIN_SLOT,
+                        this.patternType,
                         new PixelData(canvas.getPixels()),
                         this.nameInput.getValue(),
                         layerData,
@@ -1439,7 +1506,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         if (!isGuideVisible) return;
 
         PatternType type = patternItem.getPatternType(mainStack);
-        PatternType.FaceSegment[] segments = !isSlim ? type.getFaceSegments() : type.getSlimSegments();
+        PatternType.FaceSegment[] segments = !isSlim ? patternType.getFaceSegments() : patternType.getSlimSegments();
 
         for (PatternType.FaceSegment r : segments) {
             int sx = renderX + (int)(r.canvasX() * scale);

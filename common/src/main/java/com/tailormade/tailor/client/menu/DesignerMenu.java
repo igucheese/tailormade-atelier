@@ -65,7 +65,7 @@ public class DesignerMenu extends AbstractContainerMenu {
 
         PatternType incomingType = incoming.getPatternType(stack);
         PatternType mainType = main.getPatternType(mainStack);
-        return incomingType != mainType;
+        return mainType == null || (mainType != null && incomingType != mainType);
     }
 
     @Override

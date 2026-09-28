@@ -16,6 +16,7 @@ public class ModItems {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(MODID, Registries.ITEM);
 
     public static final RegistrySupplier<Item> PATTERN = ITEMS.register("pattern", () -> new Item(new Item.Properties()));
+    public static final RegistrySupplier<PatternItem> PATTERN_DEFAULT = ITEMS.register("pattern_default", () -> new PatternItem(null, new Item.Properties()));
     public static final RegistrySupplier<PatternItem> PATTERN_HELMET = ITEMS.register("pattern_helmet", () -> new PatternItem(PatternType.HEAD, new Item.Properties()));
     public static final RegistrySupplier<PatternItem> PATTERN_CHESTPLATE = ITEMS.register("pattern_chestplate", () -> new PatternItem(PatternType.CHEST, new Item.Properties()));
     public static final RegistrySupplier<PatternItem> PATTERN_LEGGINGS = ITEMS.register("pattern_leggings", () -> new PatternItem(PatternType.LEGS, new Item.Properties()));

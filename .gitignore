@@ -13,6 +13,7 @@ out
 *.iml
 .idea/modules
 .idea/inspectionProfiles
+.idea/runConfigurations
 
 # gradle
 build
