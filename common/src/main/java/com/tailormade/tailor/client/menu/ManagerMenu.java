@@ -88,8 +88,9 @@ public class ManagerMenu extends AbstractContainerMenu {
                 if (!(orgStack.getItem() instanceof PatternItem pattern)) return false;
                 if (!(stack.getItem() instanceof PatternItem copyPattern)) return false;
                 String orgType = pattern.getPatternType(orgStack).getType();
-                String copyType = copyPattern.getPatternType(stack).getType();
-                if (!orgType.equals(copyType)) return false;
+                PatternType copyType = copyPattern.getPatternType(stack);
+                String copyTypeStr = copyType != null ? copyType.getType() : null;
+                if (copyTypeStr != null && !orgType.equals(copyTypeStr)) return false;
                 return !stack.has(ModDataComponents.PATTERN_ID.get());
             }
         });
@@ -220,7 +221,7 @@ public class ManagerMenu extends AbstractContainerMenu {
         String patternId = stack.get(ModDataComponents.PATTERN_ID.get());
         if (patternId != null) { return false; }
         PatternType type = pattern.getPatternType(stack);
-        return armor.getEquipmentSlot() == TailorMenu.patternTypeToEquipmentSlot(type);
+        return type == null || armor.getEquipmentSlot() == TailorMenu.patternTypeToEquipmentSlot(type);
     }
 
     public void setImportedData(DesignDataRecord importedData) {
@@ -236,9 +237,9 @@ public class ManagerMenu extends AbstractContainerMenu {
         ItemStack patternStack = slotContainer.getItem(SLOT_IMPORT_PATTERN);
         if (patternStack.isEmpty() || !(patternStack.getItem() instanceof PatternItem pattern)) return false;
         if (this.imported == null) return false;
-        if (!pattern.getPatternType(patternStack).getType().equals(this.imported.type())) return false;
+        PatternType patternStackType = pattern.getPatternType(patternStack);
+        if (patternStackType != null && !patternStackType.getType().equals(this.imported.type())) return false;
         return !patternStack.has(ModDataComponents.PATTERN_ID.get());
-
     }
 
     @Override

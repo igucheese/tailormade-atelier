@@ -1,12 +1,12 @@
 {
   "type": "minecraft:crafting_shapeless",
-  "group": "tailormade:patterns_chestplate",
+  "group": "tailormade:pattern_default",
   "ingredients": [
     { "item": "minecraft:paper" },
     { "item":  "minecraft:black_dye" }
   ],
   "result": {
-    "id": "tailormade:pattern_chestplate",
+    "id": "tailormade:pattern_default",
     "count": 1
   }
 }

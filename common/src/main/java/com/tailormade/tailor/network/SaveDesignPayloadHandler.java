@@ -64,11 +64,22 @@ public class SaveDesignPayloadHandler {
             }
         }
 
-        boolean isValidSize = PatternDataSaver.isValidSize(stack, packet.pixelData(), patternItem);
+        // 対応する型紙に変換する
+        PatternItem newPatternItem = PatternDataSaver.convertToSpecificPatternItem(packet.patternType());
+        ItemStack patternStack = new ItemStack(newPatternItem, 1);
+        if (patternStack == null) return;
+        if (stack.has(ModDataComponents.PATTERN_ID.get())) {
+            // ID を転写しておく
+            patternStack.set(ModDataComponents.PATTERN_ID.get(), stack.get(ModDataComponents.PATTERN_ID.get()));
+        }
+        menu.getPatternContainer().setItem(slotIndex, patternStack);
+        menu.getPatternContainer().setChanged();
+
+        boolean isValidSize = PatternDataSaver.isValidSize(patternStack, packet.pixelData(), newPatternItem);
         if (!isValidSize) { return; }
 
         // 保存実行
-        DesignDataRecord newDesign = PatternDataSaver.saveDeign(level, stack, packet.pixelData(), packet.layers(), patternItem, player.getUUID(), name, packet.isSlim());
+        DesignDataRecord newDesign = PatternDataSaver.saveDeign(level, patternStack, packet.pixelData(), packet.layers(), newPatternItem, player.getUUID(), name, packet.isSlim());
         System.out.println("[CHECK][NEW DESIGN] " + newDesign);
         if (newDesign != null) {
             player.containerMenu.broadcastChanges();

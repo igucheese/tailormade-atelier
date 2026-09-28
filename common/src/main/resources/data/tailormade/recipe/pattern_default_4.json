@@ -1,11 +1,11 @@
 {
   "type": "minecraft:crafting_shapeless",
-  "group": "tailormade:patterns_leggings",
+  "group": "tailormade:pattern_default",
   "ingredients": [
     { "item": "tailormade:pattern_boots" }
   ],
   "result": {
-    "id": "tailormade:pattern_leggings",
+    "id": "tailormade:pattern_default",
     "count": 1
   }
 }

@@ -31,6 +31,7 @@ public class Tailormade {
                 builder.title(Component.translatable("itemGroup.tailormade"));
                 builder.icon(() -> DESIGNER_ITEM.get().getDefaultInstance());
                 builder.displayItems((parameters, output) -> {
+                    output.accept(PATTERN_DEFAULT.get());
                     output.accept(PATTERN_HELMET.get());
                     output.accept(PATTERN_CHESTPLATE.get());
                     output.accept(PATTERN_LEGGINGS.get());
