@@ -8,6 +8,7 @@ import com.tailormade.tailor.data.records.LayerData;
 import com.tailormade.tailor.data.records.PixelData;
 import com.tailormade.tailor.entities.items.PatternItem;
 import com.tailormade.tailor.registries.ModDataComponents;
+import com.tailormade.tailor.registries.ModItems;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -15,6 +16,8 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 import java.util.UUID;
+
+import static com.tailormade.tailor.data.constants.PatternType.*;
 
 public class PatternDataSaver {
     public static boolean isValidSize(ItemStack stack, PixelData pixelData, PatternItem patternItem) {
@@ -84,5 +87,29 @@ public class PatternDataSaver {
             Tailormade.LOGGER.error("[PatternDataSaver.saveDesign] エラーが発生しました: {}", e.getMessage());
             return null;
         }
+    }
+
+    public static PatternType typeFromString(String patternStr) {
+        PatternType type = null;
+        switch (patternStr) {
+            case "head" -> type = HEAD;
+            case "chest" -> type = CHEST;
+            case "legs" -> type = LEGS;
+            case "feet" -> type = FEET;
+        }
+        return type;
+    }
+
+    public static PatternItem convertToSpecificPatternItem(PatternType patternType) {
+        // 元のスタックを対応する部位専用の型紙に変換する
+        PatternItem newPatternItem = null;
+        switch (patternType) {
+            case HEAD -> newPatternItem = ModItems.PATTERN_HELMET.get();
+            case CHEST -> newPatternItem = ModItems.PATTERN_CHESTPLATE.get();
+            case LEGS -> newPatternItem = ModItems.PATTERN_LEGGINGS.get();
+            case FEET -> newPatternItem = ModItems.PATTERN_BOOTS.get();
+        }
+        if (newPatternItem == null) return null;
+        return newPatternItem;
     }
 }

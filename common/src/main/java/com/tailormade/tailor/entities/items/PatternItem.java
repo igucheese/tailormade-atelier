@@ -21,13 +21,16 @@ import static com.tailormade.tailor.utils.DesignAccessor.getDesignDataFromId;
 import static com.tailormade.tailor.utils.DesignAccessor.getPixelDataFromId;
 
 public class PatternItem extends Item {
-    private final PatternType patternType;
+    private PatternType patternType;
 
     public PatternItem(PatternType patternType, Properties properties) {
         super(properties);
         this.patternType = patternType;
     }
 
+    public void setPatternType(PatternType type) {
+        this.patternType = type;
+    }
     public PatternType getPatternType(ItemStack mainStack) {
         return this.patternType;
     }

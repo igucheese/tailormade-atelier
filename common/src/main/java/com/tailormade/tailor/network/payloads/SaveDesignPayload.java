@@ -1,5 +1,6 @@
 package com.tailormade.tailor.network.payloads;
 
+import com.tailormade.tailor.data.constants.PatternType;
 import com.tailormade.tailor.data.records.LayerData;
 import com.tailormade.tailor.data.records.PixelData;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static com.tailormade.tailor.Tailormade.MODID;
 
-public record SaveDesignPayload (int slotIndex, PixelData pixelData, String name, List<LayerData> layers, boolean isSlim) implements CustomPacketPayload {
+public record SaveDesignPayload (int slotIndex, PatternType patternType, PixelData pixelData, String name, List<LayerData> layers, boolean isSlim) implements CustomPacketPayload {
     public static final ResourceLocation ID =
             ResourceLocation.fromNamespaceAndPath(MODID, "save_design_pattern");
 
@@ -27,6 +28,7 @@ public record SaveDesignPayload (int slotIndex, PixelData pixelData, String name
 
     private static void encode(RegistryFriendlyByteBuf buf, SaveDesignPayload packet) {
         buf.writeVarInt(packet.slotIndex());
+        buf.writeUtf(packet.patternType.getType());
         PixelData.STREAM_CODEC.encode(buf, packet.pixelData());
         buf.writeUtf(packet.name());
         LayerData.STREAM_CODEC.apply(ByteBufCodecs.list()).encode(buf, packet.layers());
@@ -35,11 +37,19 @@ public record SaveDesignPayload (int slotIndex, PixelData pixelData, String name
 
     private static SaveDesignPayload decode(RegistryFriendlyByteBuf buf) {
         int slotIndex = buf.readVarInt();
+        String patternTypeStr = buf.readUtf();
+        PatternType patternType = PatternType.CHEST;
+        switch (patternTypeStr) {
+            case "head" -> patternType = PatternType.HEAD;
+            case "chest" -> patternType = PatternType.CHEST;
+            case "legs" -> patternType = PatternType.LEGS;
+            case "feet" -> patternType = PatternType.FEET;
+        }
         PixelData pixels = PixelData.STREAM_CODEC.decode(buf);
         String name = buf.readUtf();
         List<LayerData> layers = LayerData.STREAM_CODEC.apply(ByteBufCodecs.list()).decode(buf);
         boolean isSlim = buf.readBoolean();
-        return new SaveDesignPayload(slotIndex, pixels, name, layers, isSlim);
+        return new SaveDesignPayload(slotIndex, patternType, pixels, name, layers, isSlim);
     }
 
     @Override
