@@ -1446,7 +1446,6 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
                     LayerService.newLayer(i, i, new PixelData(layers.get(i).pixelData()), layers.get(i).isVisible())
             );
         }
-        System.out.println("[CHECK][DesignerScreen.onSave] type: " + this.patternType);
 
         NetworkManager.sendToServer(
                 new SaveDesignPayload(
@@ -1460,7 +1459,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         );
 
         hasUnsavedChanges = false;
-        this.onClose();
+//        this.onClose();
     }
 
     @Override

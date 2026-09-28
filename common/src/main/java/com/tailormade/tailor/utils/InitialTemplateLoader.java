@@ -60,9 +60,18 @@ public class InitialTemplateLoader {
 
     private static int copyFromJar(URI jarUri, Path targetDir) throws IOException {
         int copied = 0;
+        boolean createdByUs = false;
+        FileSystem fs;
 
         Map<String, String> env = new HashMap<>();
-        try (FileSystem fs = getOrCreateFileSystem(jarUri, env)) {
+        try {
+            fs = FileSystems.newFileSystem(jarUri, env);
+            createdByUs = true;
+        } catch (FileSystemAlreadyExistsException e) {
+            fs = FileSystems.getFileSystem(jarUri);
+        }
+
+        try {
             Path sourceDir = fs.getPath(RESOURCE_DIR);
             if (!Files.isDirectory(sourceDir)) {
                 return 0;
@@ -77,6 +86,10 @@ public class InitialTemplateLoader {
                         copied++;
                     }
                 }
+            }
+        } finally {
+            if (createdByUs) {
+                fs.close();
             }
         }
 
