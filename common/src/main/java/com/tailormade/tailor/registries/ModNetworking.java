@@ -6,12 +6,11 @@ import com.tailormade.tailor.network.SaveDesignPayloadHandler;
 import com.tailormade.tailor.network.SaveSkinLayerPayloadHandler;
 import com.tailormade.tailor.network.payloads.*;
 import dev.architectury.networking.NetworkManager;
+import dev.architectury.platform.Platform;
+import dev.architectury.utils.Env;
 
 public class ModNetworking {
     public static void register() {
-        /*
-         * Client to Server
-         */
         NetworkManager.registerReceiver(NetworkManager.Side.C2S,
                 SaveDesignPayload.TYPE, SaveDesignPayload.STREAM_CODEC,
                 SaveDesignPayloadHandler::handle);
@@ -61,19 +60,23 @@ public class ModNetworking {
                 RetrieveCatalogPayload.TYPE, RetrieveCatalogPayload.STREAM_CODEC,
                 RetrieveCatalogPayload::handle);
 
-        /*
-         * Server to Client: ここでは型の宣言のみ。受信登録はクライアント側で行う
-         */
-//        NetworkManager.registerS2CPayloadType(SyncSkinLayerPayload.TYPE, SyncSkinLayerPayload.STREAM_CODEC);
-//        NetworkManager.registerS2CPayloadType(SyncUnderwearPayload.TYPE, SyncUnderwearPayload.STREAM_CODEC);
-//        NetworkManager.registerS2CPayloadType(SyncDesignPayload.TYPE, SyncDesignPayload.STREAM_CODEC);
-//        NetworkManager.registerS2CPayloadType(SyncMannequinPayload.TYPE, SyncMannequinPayload.STREAM_CODEC);
-//        NetworkManager.registerS2CPayloadType(ExportDesignDataToClientPayload.TYPE, ExportDesignDataToClientPayload.STREAM_CODEC);
-//        NetworkManager.registerS2CPayloadType(SyncGlobalPlayerPayload.TYPE, SyncGlobalPlayerPayload.STREAM_CODEC);
-//        NetworkManager.registerS2CPayloadType(SyncDesignTemplatePayload.TYPE, SyncDesignTemplatePayload.STREAM_CODEC);
-//        NetworkManager.registerS2CPayloadType(SyncCatalogPayload.TYPE, SyncCatalogPayload.STREAM_CODEC);
-//        NetworkManager.registerS2CPayloadType(SyncAllCatalogsPayload.TYPE, SyncAllCatalogsPayload.STREAM_CODEC);
-//        NetworkManager.registerS2CPayloadType(OpenCatalogPayload.TYPE, OpenCatalogPayload.STREAM_CODEC);
+        if (Platform.getEnvironment() == Env.SERVER) {
+            registerServerS2CTypes();
+        }
+    }
+
+    private static void registerServerS2CTypes() {
+        NetworkManager.registerS2CPayloadType(SyncSkinLayerPayload.TYPE, SyncSkinLayerPayload.STREAM_CODEC);
+        NetworkManager.registerS2CPayloadType(SyncUnderwearPayload.TYPE, SyncUnderwearPayload.STREAM_CODEC);
+        NetworkManager.registerS2CPayloadType(SyncDesignPayload.TYPE, SyncDesignPayload.STREAM_CODEC);
+        NetworkManager.registerS2CPayloadType(SyncMannequinPayload.TYPE, SyncMannequinPayload.STREAM_CODEC);
+        NetworkManager.registerS2CPayloadType(ExportDesignDataToClientPayload.TYPE, ExportDesignDataToClientPayload.STREAM_CODEC);
+        NetworkManager.registerS2CPayloadType(SyncGlobalPlayerPayload.TYPE, SyncGlobalPlayerPayload.STREAM_CODEC);
+        NetworkManager.registerS2CPayloadType(SyncDesignTemplatePayload.TYPE, SyncDesignTemplatePayload.STREAM_CODEC);
+        NetworkManager.registerS2CPayloadType(SyncCatalogPayload.TYPE, SyncCatalogPayload.STREAM_CODEC);
+        NetworkManager.registerS2CPayloadType(SyncAllCatalogsPayload.TYPE, SyncAllCatalogsPayload.STREAM_CODEC);
+        NetworkManager.registerS2CPayloadType(OpenCatalogPayload.TYPE, OpenCatalogPayload.STREAM_CODEC);
+        NetworkManager.registerS2CPayloadType(CloseDesignScreenPayload.TYPE, CloseDesignScreenPayload.STREAM_CODEC);
     }
 
     public static void registerClientReceivers() {
@@ -107,5 +110,8 @@ public class ModNetworking {
         NetworkManager.registerReceiver(NetworkManager.Side.S2C,
                 OpenCatalogPayload.TYPE, OpenCatalogPayload.STREAM_CODEC,
                 OpenCatalogPayload::handle);
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C,
+                CloseDesignScreenPayload.TYPE, CloseDesignScreenPayload.STREAM_CODEC,
+                CloseDesignScreenPayload::handle);
     }
 }

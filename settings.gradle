@@ -11,3 +11,4 @@ rootProject.name = 'tailormade'
 
 include 'common'
 include 'neoforge'
+include 'fabric'

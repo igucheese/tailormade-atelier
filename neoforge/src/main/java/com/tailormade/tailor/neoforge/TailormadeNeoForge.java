@@ -17,7 +17,7 @@ public class TailormadeNeoForge {
     public TailormadeNeoForge(IEventBus modEventBus, ModContainer modContainer) {
         Tailormade.init();
         if (FMLEnvironment.dist == Dist.CLIENT) {
-            ClientRenderEvents.register(modEventBus, NeoForge.EVENT_BUS);
+            ClientRenderEvents.register(modEventBus);
             ModNetworking.registerClientReceivers();
         }
         modContainer.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);

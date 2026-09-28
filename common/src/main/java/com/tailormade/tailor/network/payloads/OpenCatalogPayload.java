@@ -30,7 +30,6 @@ public record OpenCatalogPayload(UUID id, boolean isFromLectern, BlockPos pos) i
 
     public static void handle(OpenCatalogPayload payload, NetworkManager.PacketContext ctx) {
         ctx.queue(() -> {
-             System.out.println("[CHECK][OpenCatalogPayload.handle] open! ");
              ClientHooks.openCatalogScreen(payload.id(), payload.isFromLectern(), payload.pos());
         });
     }
