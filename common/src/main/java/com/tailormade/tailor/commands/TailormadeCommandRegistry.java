@@ -1,7 +1,9 @@
 package com.tailormade.tailor.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.tailormade.tailor.config.TailormadeServerConfig;
 import com.tailormade.tailor.data.DesignData;
 import com.tailormade.tailor.data.records.DesignDataRecord;
 import com.tailormade.tailor.utils.OldDataMerger;
@@ -50,6 +52,16 @@ public final class TailormadeCommandRegistry {
                                                     return createPatternTemplate(context.getSource(), inputFileName, outputFileName);
                                                 })
                                         )
+                                )
+                        )
+                )
+                .then(Commands.literal("set")
+                        .then(Commands.literal("dyeCost")
+                                .then(Commands.argument("multiplier", FloatArgumentType.floatArg())
+                                        .executes(context -> {
+                                            float multiplier = FloatArgumentType.getFloat(context, "multiplier");
+                                            return setDyeCostMultiplier(context.getSource(), multiplier);
+                                        })
                                 )
                         )
                 )
@@ -117,5 +129,11 @@ public final class TailormadeCommandRegistry {
             e.printStackTrace();
             return 0;
         }
+    }
+
+    private static int setDyeCostMultiplier(CommandSourceStack source, float multiplier) {
+        TailormadeServerConfig.DYE_COST_MULTIPLIER.set(multiplier);
+        source.sendSuccess(() -> Component.translatable("command.tailormade.set.dyecost.done", multiplier), true);
+        return 1;
     }
 }
