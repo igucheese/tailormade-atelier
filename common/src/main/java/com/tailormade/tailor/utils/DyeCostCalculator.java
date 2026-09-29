@@ -1,5 +1,7 @@
 package com.tailormade.tailor.utils;
 
+import com.tailormade.tailor.config.TailormadeServerConfig;
+
 public final class DyeCostCalculator {
     public static final int DYE_TANK_PER_ITEM = 100;
     public static final double COST_SCALE = 40.0;
@@ -29,10 +31,11 @@ public final class DyeCostCalculator {
         }
 
         double divisor = 255.0 * total;
+        float multiplier = getMultiplier();
 
-        int costR = (int) Math.ceil(sumR / divisor * COST_SCALE);
-        int costG = (int) Math.ceil(sumG / divisor * COST_SCALE);
-        int costB = (int) Math.ceil(sumB / divisor * COST_SCALE);
+        int costR = (int) (Math.ceil(sumR / divisor * COST_SCALE)  * multiplier);
+        int costG = (int) (Math.ceil(sumG / divisor * COST_SCALE) * multiplier);
+        int costB = (int) (Math.ceil(sumB / divisor * COST_SCALE) * multiplier);
 
         return new DyeCost(costR, costG, costB);
     }
@@ -42,5 +45,9 @@ public final class DyeCostCalculator {
         int needG = Math.max(0, (int) Math.ceil((cost.green() - tankG) / (double) DYE_TANK_PER_ITEM));
         int needB = Math.max(0, (int) Math.ceil((cost.blue()  - tankB) / (double) DYE_TANK_PER_ITEM));
         return new int[]{needR, needG, needB};
+    }
+
+    public static float getMultiplier() {
+        return TailormadeServerConfig.DYE_COST_MULTIPLIER.get();
     }
 }
