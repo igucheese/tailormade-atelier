@@ -5,6 +5,7 @@ import com.tailormade.tailor.client.menu.ManagerMenu;
 import com.tailormade.tailor.data.DesignData;
 import com.tailormade.tailor.data.records.DesignDataRecord;
 import com.tailormade.tailor.entities.items.PatternItem;
+import com.tailormade.tailor.registries.ModDataComponents;
 import com.tailormade.tailor.utils.ChatService;
 import com.tailormade.tailor.utils.PatternDataSaver;
 import com.tailormade.tailor.utils.SoundService;
@@ -86,12 +87,20 @@ public record CopyDesignPayload(int slotIndex, UUID patternId) implements Custom
             ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.guarded"), true);
             return;
         }
-        boolean isValidSize = PatternDataSaver.isValidSize(stack, orgData.pixelData(), patternItem);
+        // 対応する型紙に変換する
+        String typeStr = orgData.type();
+        PatternItem newPatternItem = PatternDataSaver.convertToSpecificPatternItem(PatternDataSaver.typeFromString(typeStr));
+        ItemStack patternStack = new ItemStack(newPatternItem, 1);
+        if (patternStack == null) return;
+        menu.getPatternContainer().setItem(slotIndex, patternStack);
+        menu.getPatternContainer().setChanged();
+
+        boolean isValidSize = PatternDataSaver.isValidSize(patternStack, orgData.pixelData(), newPatternItem);
         if (!isValidSize) { return; }
 
         // 保存実行
         // 所有者をコピーした人に変更
-        DesignDataRecord newDesign = PatternDataSaver.saveDeign(level, stack, orgData.pixelData(), orgData.layers(), patternItem, player.getUUID(), orgData.name(), orgData.designerId(), true, false, false, orgData.isSlim());
+        DesignDataRecord newDesign = PatternDataSaver.saveDeign(level, patternStack, orgData.pixelData(), orgData.layers(), newPatternItem, player.getUUID(), orgData.name(), orgData.designerId(), true, false, false, orgData.isSlim());
         if (newDesign != null) {
             Tailormade.LOGGER.warn(
                     "SavePattern: コピーしたよ！もとのID: {}、コピー品のID: {}",

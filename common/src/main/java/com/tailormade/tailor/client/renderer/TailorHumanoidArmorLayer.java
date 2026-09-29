@@ -1,4 +1,4 @@
-package com.tailormade.tailor.neoforge.client.renderer;
+package com.tailormade.tailor.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tailormade.tailor.registries.ModDataComponents;

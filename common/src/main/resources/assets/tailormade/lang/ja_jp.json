@@ -15,6 +15,7 @@
   "item.tailormade.pattern.description.type.chestplate": "上衣の型紙",
   "item.tailormade.pattern.description.type.leggings": "下衣の型紙",
   "item.tailormade.pattern.description.type.boots": "靴の型紙",
+  "item.tailormade.pattern_default": "デザイン型紙",
   "item.tailormade.pattern_helmet": "帽子の型紙",
   "item.tailormade.pattern_chestplate": "上衣の型紙",
   "item.tailormade.pattern_leggings": "下衣の型紙",
@@ -95,5 +96,6 @@
   "command.tailormade.updateAllData.count_merge_required": "オーバーワールド以外に保存されているデータが %s件 検出されました。",
   "command.tailormade.updateAllData.merged": "オーバーワールド以外に保存されていた %s件 のデータをオーバーワールドデータに保存しました。",
   "command.tailormade.updateAllData.clean_up": "オーバーワールド以外に保存されていた %s件 のデータを削除しました。",
-  "command.tailormade.updateAllData.clean_up_interrupted": "古いデータのマージ作業前に削除処理を実行しようとしたため、中断しました。"
+  "command.tailormade.updateAllData.clean_up_interrupted": "古いデータのマージ作業前に削除処理を実行しようとしたため、中断しました。",
+  "command.tailormade.set.dyecost.done": "染色に必要なインク量の係数を %s に設定しました。"
 }
