@@ -110,14 +110,33 @@ public class TailorTextureCompositor {
                         int idx = (seg.canvasY() + y) * canvasW + (seg.canvasX() + x);
                         if (idx < 0 || idx >= pixels.length) continue;
 
-                        img.setPixelRGBA(seg.uvX() + x, seg.uvY() + y,
-                                argbToAbgr(pixels[idx]));
+                        int src = pixels[idx];
+                        if (((src >>> 24) & 0xFF) == 0) continue;
+
+                        int px = seg.uvX() + x;
+                        int py = seg.uvY() + y;
+                        img.setPixelRGBA(px, py, blend(argbToAbgr(src), img.getPixelRGBA(px, py)));
                     }
                 }
             }
         }
 
         dynamicTexture.upload();
+    }
+
+    private static int blend(int src, int dst) {
+        int sa = (src >>> 24) & 0xFF;
+        if (sa == 255) return src;
+        int da = (dst >>> 24) & 0xFF;
+        if (da == 0) return src;
+
+        int outA = sa + da * (255 - sa) / 255;
+        if (outA == 0) return 0;
+
+        int r = ((src & 0xFF) * sa + (dst & 0xFF) * da * (255 - sa) / 255) / outA;
+        int g = (((src >> 8) & 0xFF) * sa + ((dst >> 8) & 0xFF) * da * (255 - sa) / 255) / outA;
+        int b = (((src >> 16) & 0xFF) * sa + ((dst >> 16) & 0xFF) * da * (255 - sa) / 255) / outA;
+        return (outA << 24) | (b << 16) | (g << 8) | r;
     }
 
     private static int argbToAbgr(int argb) {
