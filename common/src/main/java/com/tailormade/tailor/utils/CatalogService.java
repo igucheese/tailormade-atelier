@@ -58,7 +58,6 @@ public class CatalogService {
     }
 
     public static void openClientScreen(ServerPlayer player, UUID id, boolean isFromLectern, BlockPos pos) {
-        System.out.println("[CHECK][CatalogService.openClientScreen] openClientScreen! " + id);
         CatalogData catalog = CatalogSavedData.get(player.serverLevel()).getCatalog(id);
         if (catalog == null) {
             // 新規作成する

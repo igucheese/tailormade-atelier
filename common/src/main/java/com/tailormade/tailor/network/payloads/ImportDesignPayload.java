@@ -70,14 +70,24 @@ public record ImportDesignPayload(DesignDataRecord imported) implements CustomPa
             ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.incompatible"), true);
             return;
         }
-        boolean isValidSize = PatternDataSaver.isValidSize(stack, packet.imported().pixelData(), patternItem);
+        DesignDataRecord orgData = packet.imported();
+
+        // 対応する型紙に変換する
+        String typeStr = orgData.type();
+        PatternItem newPatternItem = PatternDataSaver.convertToSpecificPatternItem(PatternDataSaver.typeFromString(typeStr));
+        ItemStack newPatternStack = new ItemStack(newPatternItem, 1);
+        if (newPatternStack == null) return;
+        menu.getPatternContainer().setItem(ManagerMenu.SLOT_IMPORT_PATTERN, newPatternStack);
+        menu.getPatternContainer().setChanged();
+
+        boolean isValidSize = PatternDataSaver.isValidSize(newPatternStack, packet.imported().pixelData(), newPatternItem);
         if (!isValidSize) { return; }
 
         // 更新用の名前
         String name = Component.translatable("item.tailormade.pattern.imported", packet.imported().name()).getString();
 
         // 保存実行
-        DesignDataRecord newDesign = PatternDataSaver.saveDeign(level, stack, packet.imported().pixelData(), packet.imported().layers(), patternItem, player.getUUID(), packet.imported().name(), packet.imported().designerId(), false, false, true, packet.imported().isSlim());
+        DesignDataRecord newDesign = PatternDataSaver.saveDeign(level, newPatternStack, packet.imported().pixelData(), packet.imported().layers(), newPatternItem, player.getUUID(), packet.imported().name(), packet.imported().designerId(), false, false, true, packet.imported().isSlim());
         if (newDesign != null) {
             ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.design_imported"), true);
             NetworkManager.sendToPlayers(level.players(), new SyncDesignPayload(newDesign.uuid(), newDesign));
