@@ -18,7 +18,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class TailorBlockEntity extends BlockEntity implements MenuProvider {
     public static final int DYE_PER_ITEM = 100;
-    public static final int TANK_MAX = DYE_PER_ITEM * 32;
+    public static final int TANK_MAX = DYE_PER_ITEM * 64;
 
     private int tankR = 0;
     private int tankG = 0;
