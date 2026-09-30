@@ -58,27 +58,27 @@ public class MannequinModel extends EntityModel<MannequinEntity> {
 
         root.addOrReplaceChild("body",
                 CubeListBuilder.create()
-                        .texOffs(0, 16).addBox(-4F, 0F, -2F, 8, 12, 4, new CubeDeformation(0F)),
+                        .texOffs(16, 16).addBox(-4F, 0F, -2F, 8, 12, 4, new CubeDeformation(0F)),
                 PartPose.offset(0F, 0F, 0F));
 
         root.addOrReplaceChild("leftArm",
                 CubeListBuilder.create()
-                        .texOffs(0, 32).addBox(-3F, -2F, -2F, 4, 12, 4, new CubeDeformation(0F)),
+                        .texOffs(32, 48).addBox(-3F, -2F, -2F, 4, 12, 4, new CubeDeformation(0F)),
                 PartPose.offset(-5F, 2F, 0F));
 
         root.addOrReplaceChild("rightArm",
                 CubeListBuilder.create()
-                        .texOffs(24, 16).addBox(-1F, -2F, -2F, 4, 12, 4, new CubeDeformation(0F)),
+                        .texOffs(40, 16).addBox(-1F, -2F, -2F, 4, 12, 4, new CubeDeformation(0F)),
                 PartPose.offset(5F, 2F, 0F));
 
         root.addOrReplaceChild("rightLeg",
                 CubeListBuilder.create()
-                        .texOffs(16, 32).addBox(-2F, 0F, -2F, 4, 12, 4, new CubeDeformation(0F)),
+                        .texOffs(0, 16).addBox(-2F, 0F, -2F, 4, 12, 4, new CubeDeformation(0F)),
                 PartPose.offset(2F, 12F, 0F));
 
         root.addOrReplaceChild("leftLeg",
                 CubeListBuilder.create()
-                        .texOffs(32, 0).addBox(-2F, 0F, -2F, 4, 12, 4, new CubeDeformation(0F)),
+                        .texOffs(16, 48).addBox(-2F, 0F, -2F, 4, 12, 4, new CubeDeformation(0F)),
                 PartPose.offset(-2F, 12F, 0F));
 
         root.addOrReplaceChild("hat",
@@ -175,6 +175,15 @@ public class MannequinModel extends EntityModel<MannequinEntity> {
         leftArm.xRot = -0.3F;
         leftLeg.xRot = 0.2F;
         rightLeg.xRot = -0.2F;
+    }
+
+    public void renderBase(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
+        head.render(poseStack, buffer, packedLight, packedOverlay, color);
+        body.render(poseStack, buffer, packedLight, packedOverlay, color);
+        leftArm.render(poseStack, buffer, packedLight, packedOverlay, color);
+        rightArm.render(poseStack, buffer, packedLight, packedOverlay, color);
+        rightLeg.render(poseStack, buffer, packedLight, packedOverlay, color);
+        leftLeg.render(poseStack, buffer, packedLight, packedOverlay, color);
     }
 
     @Override

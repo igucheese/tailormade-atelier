@@ -15,6 +15,7 @@
   "item.tailormade.pattern.description.type.chestplate": "Shirt Pattern",
   "item.tailormade.pattern.description.type.leggings": "Pants Pattern",
   "item.tailormade.pattern.description.type.boots": "Shoes Pattern",
+  "item.tailormade.pattern_default": "Design Pattern",
   "item.tailormade.pattern_helmet": "Hat Pattern",
   "item.tailormade.pattern_chestplate": "Shirt Pattern",
   "item.tailormade.pattern_leggings": "Pants Pattern",
@@ -95,5 +96,6 @@
   "command.tailormade.updateAllData.count_merge_required": "Found %s entries saved outside the Overworld.",
   "command.tailormade.updateAllData.merged": "Saved %s entries previously saved outside the Overworld to Overworld data.",
   "command.tailormade.updateAllData.clean_up": "Deleted %s entries saved outside the Overworld.",
-  "command.tailormade.updateAllData.clean_up_interrupted": "Operation aborted: you need to merge old data before cleaning up."
+  "command.tailormade.updateAllData.clean_up_interrupted": "Operation aborted: you need to merge old data before cleaning up.",
+  "command.tailormade.set.dyecost.done": "Dye cost multiplier has been set to %s."
 }

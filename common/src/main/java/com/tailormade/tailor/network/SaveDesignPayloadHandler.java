@@ -5,6 +5,7 @@ import com.tailormade.tailor.client.menu.DesignerMenu;
 import com.tailormade.tailor.data.DesignData;
 import com.tailormade.tailor.data.records.DesignDataRecord;
 import com.tailormade.tailor.entities.items.PatternItem;
+import com.tailormade.tailor.network.payloads.CloseDesignScreenPayload;
 import com.tailormade.tailor.network.payloads.SaveDesignPayload;
 import com.tailormade.tailor.network.payloads.SyncDesignPayload;
 import com.tailormade.tailor.registries.ModDataComponents;
@@ -64,18 +65,27 @@ public class SaveDesignPayloadHandler {
             }
         }
 
-        boolean isValidSize = PatternDataSaver.isValidSize(stack, packet.pixelData(), patternItem);
+        // 対応する型紙に変換する
+        PatternItem newPatternItem = PatternDataSaver.convertToSpecificPatternItem(packet.patternType());
+        ItemStack patternStack = new ItemStack(newPatternItem, 1);
+        if (patternStack == null) return;
+        if (stack.has(ModDataComponents.PATTERN_ID.get())) {
+            // ID を転写しておく
+            patternStack.set(ModDataComponents.PATTERN_ID.get(), stack.get(ModDataComponents.PATTERN_ID.get()));
+        }
+        menu.getPatternContainer().setItem(slotIndex, patternStack);
+        menu.getPatternContainer().setChanged();
+
+        boolean isValidSize = PatternDataSaver.isValidSize(patternStack, packet.pixelData(), newPatternItem);
         if (!isValidSize) { return; }
 
         // 保存実行
-        DesignDataRecord newDesign = PatternDataSaver.saveDeign(level, stack, packet.pixelData(), packet.layers(), patternItem, player.getUUID(), name, packet.isSlim());
-        System.out.println("[CHECK][NEW DESIGN] " + newDesign);
+        DesignDataRecord newDesign = PatternDataSaver.saveDeign(level, patternStack, packet.pixelData(), packet.layers(), newPatternItem, player.getUUID(), name, packet.isSlim());
         if (newDesign != null) {
             player.containerMenu.broadcastChanges();
             ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.design_saved"), true);
             NetworkManager.sendToPlayers(level.players(), new SyncDesignPayload(newDesign.uuid(), newDesign));
-        } else {
-            ChatService.showMessage(player, Component.literal("だめでしたあ"), false);
+            NetworkManager.sendToPlayer(player, new CloseDesignScreenPayload());
         }
     }
 }

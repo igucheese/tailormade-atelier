@@ -80,7 +80,7 @@ public record ExtractDesignPayload(UUID patternId) implements CustomPacketPayloa
             return;
         }
         PatternType type = patternItem.getPatternType(patternStack);
-        if (armorItem.getEquipmentSlot() != TailorMenu.patternTypeToEquipmentSlot(type)) {
+        if (type != null && armorItem.getEquipmentSlot() != TailorMenu.patternTypeToEquipmentSlot(type)) {
             ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.incompatible"), true);
             Tailormade.LOGGER.warn("対応する型紙がセットされていません！");
             return;
@@ -95,12 +95,21 @@ public record ExtractDesignPayload(UUID patternId) implements CustomPacketPayloa
             ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.guarded"), true);
             return;
         }
-        boolean isValidSize = PatternDataSaver.isValidSize(patternStack, orgData.pixelData(), patternItem);
+
+        // 対応する型紙に変換する
+        String typeStr = orgData.type();
+        PatternItem newPatternItem = PatternDataSaver.convertToSpecificPatternItem(PatternDataSaver.typeFromString(typeStr));
+        ItemStack newPatternStack = new ItemStack(newPatternItem, 1);
+        if (newPatternStack == null) return;
+        menu.getPatternContainer().setItem(ManagerMenu.SLOT_EXTRACT_PATTERN, newPatternStack);
+        menu.getPatternContainer().setChanged();
+
+        boolean isValidSize = PatternDataSaver.isValidSize(newPatternStack, orgData.pixelData(), newPatternItem);
         if (!isValidSize) { return; }
 
         // 保存実行
         // 所有者を抽出した人に更新
-        DesignDataRecord newDesign = PatternDataSaver.saveDeign((ServerLevel) player.level(), patternStack, orgData.pixelData(), orgData.layers(), patternItem, player.getUUID(), orgData.name(), orgData.designerId(), false, true, false, orgData.isSlim());
+        DesignDataRecord newDesign = PatternDataSaver.saveDeign((ServerLevel) player.level(), newPatternStack, orgData.pixelData(), orgData.layers(), newPatternItem, player.getUUID(), orgData.name(), orgData.designerId(), false, true, false, orgData.isSlim());
         if (newDesign != null) {
             Tailormade.LOGGER.warn(
                     "SavePattern: 抽出したよ！もとのID: {}、抽出品のID: {}",
@@ -110,7 +119,7 @@ public record ExtractDesignPayload(UUID patternId) implements CustomPacketPayloa
             ChatService.showMessage(player, Component.translatable("message.tailormade.pattern_manager.extracted"), true);
 
             ItemStack itemStack = menu.getSlot(ManagerMenu.SLOT_EXTRACT_PATTERN).getItem();
-            if (!patternStack.isEmpty()) {
+            if (!newPatternStack.isEmpty()) {
                 ItemStack toReturn = itemStack.copy();
                 menu.getSlot(ManagerMenu.SLOT_EXTRACT_PATTERN).set(ItemStack.EMPTY);
                 player.getInventory().placeItemBackInInventory(toReturn);
