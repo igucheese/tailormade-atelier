@@ -33,13 +33,14 @@ public class MannequinTailorRenderLayer extends RenderLayer<MannequinEntity, Man
         poseStack.pushPose();
         poseStack.scale(1.001F, 1.001F, 1.001F);
 
-        getParentModel().renderToBuffer(
+        getParentModel().renderBase(
                 poseStack,
                 bufferSource.getBuffer(RenderType.entityCutoutNoCull(
                         ResourceLocation.fromNamespaceAndPath(MODID, "textures/block/mannequin.png")
                 )),
                 fullLight,
-                OverlayTexture.NO_OVERLAY
+                OverlayTexture.NO_OVERLAY,
+                -1
         );
 
         Map<PatternType, int[]> pixelMap = collectPixelData(entity);
