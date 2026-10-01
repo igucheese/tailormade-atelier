@@ -251,6 +251,7 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         EditBox box = new EditBox(font, x, y, RGB_BOX_W, RGB_BOX_H, Component.literal(hint));
         box.setMaxLength(3);
         box.setValue("0");
+        box.setFilter(v -> v.matches("\\d+") && Integer.parseInt(v) < 256 && Integer.parseInt(v) >= 0);
         return box;
     }
 
@@ -826,6 +827,16 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             }
         }
 
+        // フォーム入力時、フォーム以外をクリックしたらフォーカスを外す
+        if (button == 0 && this.nameInput.isFocused() && !inNameEditBox(mx, my)) {
+            this.nameInput.setFocused(false);
+        }
+        if (button == 0 && this.isRGBFocused() && !inRGBBox(mx, my)) {
+            this.rBox.setFocused(false);
+            this.gBox.setFocused(false);
+            this.bBox.setFocused(false);
+        }
+
         IS_CONTROLLING_LAYER = false;
 
         if (palette.mouseClicked(mx, my)) {
@@ -1023,6 +1034,9 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             if (keyCode != GLFW.GLFW_KEY_ESCAPE) {
                 return false;
             }
+            return super.keyPressed(keyCode, scanCode, modifiers);
+        }
+        if (this.isRGBFocused()) {
             return super.keyPressed(keyCode, scanCode, modifiers);
         }
 
@@ -1327,6 +1341,23 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
         };
     }
 
+    private boolean inNameEditBox(double mx, double my) {
+        return inBox(mx, my, leftPos + PV_X + PV_W - 70, topPos + PV_Y + PV_H - 6, 72, 19);
+    }
+
+    private boolean isRGBFocused() {
+        return this.rBox.isFocused() || this.gBox.isFocused() || this.bBox.isFocused();
+    }
+    private boolean inRGBBox(double mx, double my) {
+        int rgbBaseX = leftPos + 14;
+        int rgbY = topPos + ED_Y + ED_H + RGB_Y_OFFSET;
+        return (
+                inBox(mx, my, rgbBaseX, rgbY, RGB_BOX_W, RGB_BOX_H) ||
+                inBox(mx, my, rgbBaseX + RGB_BOX_W + 6, rgbY, RGB_BOX_W, RGB_BOX_H) ||
+                inBox(mx, my, rgbBaseX + (RGB_BOX_W * 2) + 12, rgbY, RGB_BOX_W, RGB_BOX_H)
+        );
+    }
+
     private boolean inEditorArea(double mx, double my) {
         return inBox(mx, my, leftPos + ED_X, topPos + ED_Y, ED_W, ED_H);
     }
@@ -1388,6 +1419,9 @@ public class DesignerScreen extends AbstractContainerScreen<DesignerMenu> {
             int g = Integer.parseInt(gBox.getValue());
             int b = Integer.parseInt(bBox.getValue());
             palette.setRgb(r, g, b);
+            int color = palette.getSelectedColor();
+            hueBar.setHueFromColor(color);
+            colorPicker.setSelectedColor(color);
         } catch (NumberFormatException ignored) {}
     }
 
