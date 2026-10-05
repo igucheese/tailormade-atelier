@@ -10,6 +10,7 @@ import com.tailormade.tailor.client.renderer.UnderwearTextureCompositor;
 import com.tailormade.tailor.data.*;
 import com.tailormade.tailor.data.constants.PatternType;
 import com.tailormade.tailor.data.records.PixelData;
+import com.tailormade.tailor.data.records.SkinDataRecord;
 import com.tailormade.tailor.data.records.UnderwearSetting;
 import com.tailormade.tailor.data.constants.UnderwearType;
 import com.tailormade.tailor.network.payloads.SaveUnderwearPayload;
@@ -110,7 +111,8 @@ public class WardrobeScreen extends Screen {
             }
         }
 
-        PixelData existingData = SkinDataClientCache.get(playerId);
+        SkinDataRecord skin = SkinDataClientCache.get(playerId);
+        PixelData existingData = skin != null ? skin.pixelData() : null;
         if (existingData == null) {
             canvas = new PixelCanvas(64, 64);
             canvas.init();
