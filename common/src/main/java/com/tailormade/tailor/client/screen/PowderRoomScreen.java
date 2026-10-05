@@ -247,6 +247,7 @@ public class PowderRoomScreen extends Screen {
         EditBox box = new EditBox(font, x, y, RGB_BOX_W, RGB_BOX_H, Component.literal(hint));
         box.setMaxLength(3);
         box.setValue("0");
+        box.setFilter(v -> v.matches("\\d+") && Integer.parseInt(v) < 256 && Integer.parseInt(v) >= 0);
         return box;
     }
 
@@ -541,6 +542,12 @@ public class PowderRoomScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
+        // フォーム入力時、フォーム以外をクリックしたらフォーカスを外す
+        if (button == 0 && this.isRGBFocused() && !inRGBBox(mx, my)) {
+            this.rBox.setFocused(false);
+            this.gBox.setFocused(false);
+            this.bBox.setFocused(false);
+        }
         if (palette.mouseClicked(mx, my)) {
             clickedArea = "palette";
             syncRgbBoxes();
@@ -717,6 +724,9 @@ public class PowderRoomScreen extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (this.isRGBFocused()) {
+            return super.keyPressed(keyCode, scanCode, modifiers);
+        }
         boolean ctrl = (modifiers & org.lwjgl.glfw.GLFW.GLFW_MOD_CONTROL) != 0;
         boolean shift = (modifiers & org.lwjgl.glfw.GLFW.GLFW_MOD_SHIFT) != 0;
         if (ctrl && keyCode == org.lwjgl.glfw.GLFW.GLFW_KEY_Z) {
@@ -860,6 +870,18 @@ public class PowderRoomScreen extends Screen {
         };
     }
 
+    private boolean isRGBFocused() {
+        return this.rBox.isFocused() || this.gBox.isFocused() || this.bBox.isFocused();
+    }
+    private boolean inRGBBox(double mx, double my) {
+        int rgbBaseX = leftPos + 14;
+        int rgbY = topPos + ED_Y + ED_H + RGB_Y_OFFSET;
+        return (
+                inBox(mx, my, rgbBaseX, rgbY, RGB_BOX_W, RGB_BOX_H) ||
+                        inBox(mx, my, rgbBaseX + RGB_BOX_W + 6, rgbY, RGB_BOX_W, RGB_BOX_H) ||
+                        inBox(mx, my, rgbBaseX + (RGB_BOX_W * 2) + 12, rgbY, RGB_BOX_W, RGB_BOX_H)
+        );
+    }
     private boolean inEditorArea(double mx, double my) {
         return mx >= leftPos + ED_X && mx < leftPos + ED_X + ED_W && my >= topPos + ED_Y && my < topPos + ED_Y + ED_H;
     }
@@ -908,10 +930,13 @@ public class PowderRoomScreen extends Screen {
     }
     private void onRgbEdited() {
         try {
-            palette.setRgb(
-                    Integer.parseInt(rBox.getValue()),
-                    Integer.parseInt(gBox.getValue()),
-                    Integer.parseInt(bBox.getValue()));
+            int r = Integer.parseInt(rBox.getValue());
+            int g = Integer.parseInt(gBox.getValue());
+            int b = Integer.parseInt(bBox.getValue());
+            palette.setRgb(r, g, b);
+            int color = palette.getSelectedColor();
+            hueBar.setHueFromColor(color);
+            colorPicker.setSelectedColor(color);
         } catch (NumberFormatException ignored) {}
     }
 
