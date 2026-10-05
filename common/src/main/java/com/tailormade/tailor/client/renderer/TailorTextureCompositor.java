@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.EnumMap;
@@ -38,6 +39,25 @@ public class TailorTextureCompositor {
     public static void invalidate(UUID uuid) {
         TailorTextureCompositor c = CACHE.remove(uuid);
         if (c != null) c.close();
+    }
+
+    public static void clearAll() {
+        CACHE.values().forEach(TailorTextureCompositor::close);
+        CACHE.clear();
+    }
+
+    public static boolean hasAnyTailorGear(LivingEntity entity) {
+        for (EquipmentSlot slot : new EquipmentSlot[]{ EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET }) {
+            ItemStack item = entity.getItemBySlot(slot);
+            if (item.has(ModDataComponents.PATTERN_ID.get())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isCached(UUID id) {
+        return CACHE.containsKey(id);
     }
 
     public static TailorTextureCompositor createForPreview(UUID playerId) {
@@ -167,7 +187,7 @@ public class TailorTextureCompositor {
 
     public void close() {
         if (dynamicTexture != null) {
-            dynamicTexture.close();
+            Minecraft.getInstance().getTextureManager().release(textureLocation);
             dynamicTexture = null;
         }
     }
