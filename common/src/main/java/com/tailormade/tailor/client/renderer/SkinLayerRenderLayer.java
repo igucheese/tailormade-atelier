@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.tailormade.tailor.data.*;
 import com.tailormade.tailor.data.constants.PatternType;
 import com.tailormade.tailor.data.records.PixelData;
+import com.tailormade.tailor.data.records.SkinDataRecord;
 import com.tailormade.tailor.data.records.UnderwearSetting;
 import com.tailormade.tailor.data.constants.UnderwearType;
 import com.tailormade.tailor.registries.ModDataComponents;
@@ -65,10 +66,10 @@ public class SkinLayerRenderLayer extends RenderLayer<AbstractClientPlayer, Play
     }
 
     public static int[] getSkinPixels(UUID uuid) {
-        PixelData data = SkinDataClientCache.get(uuid);
-        if (data == null) {
-            return null;
-        }
+        SkinDataRecord skin = SkinDataClientCache.get(uuid);
+        if (skin == null) return null;
+        PixelData data = skin.pixelData();
+        if (data == null) return null;
         return data.getPixels();
     }
     public static UnderwearSetting getUnderwearSetting(UUID uuid) {
@@ -113,7 +114,9 @@ public class SkinLayerRenderLayer extends RenderLayer<AbstractClientPlayer, Play
         if (skinPreviewOverride != null) return skinPreviewOverride;
 
         UUID playerId = player.getUUID();
-        PixelData data = SkinDataClientCache.get(playerId);
+        SkinDataRecord skin = SkinDataClientCache.get(playerId);
+        if (skin == null || !skin.isVisible()) return null;
+        PixelData data = skin.pixelData();
         int[] pixels = data != null ? data.getPixels() : null;
 
         if (pixels == null || pixels.length != 64 * 64) {
@@ -170,6 +173,8 @@ public class SkinLayerRenderLayer extends RenderLayer<AbstractClientPlayer, Play
                     activeSlots
             );
         }
+        SkinDataRecord skin = SkinDataClientCache.get(player.getUUID());
+        if (skin == null || !skin.isVisible()) return null;
         UnderwearSetting setting = UnderwearDataClientCache.get(player.getUUID());
         if (setting == null) return null;
         return composeUnderwearTexture(player.getUUID(), setting, activeSlots);

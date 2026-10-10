@@ -97,5 +97,6 @@
   "command.tailormade.updateAllData.merged": "オーバーワールド以外に保存されていた %s件 のデータをオーバーワールドデータに保存しました。",
   "command.tailormade.updateAllData.clean_up": "オーバーワールド以外に保存されていた %s件 のデータを削除しました。",
   "command.tailormade.updateAllData.clean_up_interrupted": "古いデータのマージ作業前に削除処理を実行しようとしたため、中断しました。",
-  "command.tailormade.set.dyecost.done": "染色に必要なインク量の係数を %s に設定しました。"
+  "command.tailormade.set.dyecost.done": "染色に必要なインク量の係数を %s に設定しました。",
+  "command.tailormade.skin.delete.done": "肌レイヤーのデザインを削除しました。"
 }

@@ -1,5 +1,6 @@
 package com.tailormade.tailor.client.screen;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.tailormade.tailor.client.gui.ColorPalette;
 import com.tailormade.tailor.client.gui.ColorPickerWidget;
@@ -10,30 +11,33 @@ import com.tailormade.tailor.client.renderer.TailorTextureCompositor;
 import com.tailormade.tailor.data.*;
 import com.tailormade.tailor.data.constants.PatternType;
 import com.tailormade.tailor.data.records.PixelData;
+import com.tailormade.tailor.data.records.SkinDataRecord;
 import com.tailormade.tailor.data.records.UnderwearSetting;
 import com.tailormade.tailor.data.constants.UnderwearType;
 import com.tailormade.tailor.network.payloads.SaveSkinLayerPayload;
 import com.tailormade.tailor.utils.MannequinStylePreviewHelper;
+import com.tailormade.tailor.utils.editor.ColorService;
 import com.tailormade.tailor.utils.editor.PixelCanvas;
 import dev.architectury.networking.NetworkManager;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static com.tailormade.tailor.Tailormade.MODID;
 import static com.tailormade.tailor.data.Constants.TRANSPARENT;
@@ -54,6 +58,36 @@ public class PowderRoomScreen extends Screen {
     private static final ResourceLocation ERASER_ICON =
             ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/eraser.png");
 
+    private static final ResourceLocation TOOL_ICON_BRUSH =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/editor_tools_brush.png");
+    private static final ResourceLocation TOOL_ICON_ERASER =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/editor_tools_eraser.png");
+    private static final ResourceLocation TOOL_ICON_BUCKET =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/editor_tools_bucket.png");
+    private static final ResourceLocation TOOL_ICON_EYEDROPPER =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/editor_tools_eyedropper.png");
+    private static final ResourceLocation TOOL_ICON_SELECTION =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/editor_tools_selection.png");
+    private static final ResourceLocation TOOL_ICON_SIZE_1 =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/brush_size_1.png");
+    private static final ResourceLocation TOOL_ICON_SIZE_2 =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/brush_size_2.png");
+    private static final ResourceLocation TOOL_ICON_SIZE_3 =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/brush_size_3.png");
+
+    private static final ResourceLocation SKIN_TOGGLE_BTN_SHOW =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/skin_toggle_btn_show.png");
+    private static final ResourceLocation SKIN_TOGGLE_BTN_HIDE =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/skin_toggle_btn_hide.png");
+    private static final ResourceLocation SEG_BUTTON_BASE =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/editor_bottom_btns_2.png");
+    private static final ResourceLocation SEG_BUTTON_R =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/ebb_reg_a.png");
+    private static final ResourceLocation SEG_BUTTON_S =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/ebb_slim_a.png");
+    private static final ResourceLocation SEG_BUTTON_N =
+            ResourceLocation.fromNamespaceAndPath(MODID, "textures/gui/editor/ebb_off_a.png");
+
     private static final int GUI_W = 384;
     private static final int GUI_H = 216;
     private static final int GUI_OFFSET_X = 64;
@@ -68,9 +102,15 @@ public class PowderRoomScreen extends Screen {
     private static final int PV_Y = 6;
     private static final int PV_W = 124;
     private static final int PV_H = 172;
+    private static final int TOGGLE_X = 246;
+    private static final int TOGGLE_Y = 186;
+    private static final int TOGGLE_W = 60;
+    private static final int TOGGLE_H = 24;
+    private static final int SEG_BTN_X = 168;
+    private static final int SEG_BTN_Y = 200;
 
     private static final int PAL_X = 8;
-    private static final int PAL_Y = 10;
+    private static final int PAL_Y = 7;
 
     private static final int TOOLBAR_X = 223;
     private static final int TOOLBAR_Y = 10;
@@ -80,6 +120,7 @@ public class PowderRoomScreen extends Screen {
     private static final int RGB_Y_OFFSET = 4;  // エディタ下端からの距離
     private static final int RGB_BOX_W = 28;
     private static final int RGB_BOX_H = 10;
+    private int labelBorderColor = 0xFFFF4444;
 
     private int leftPos;
     private int topPos;
@@ -120,6 +161,9 @@ public class PowderRoomScreen extends Screen {
     private static final int FACE_LINE_COLOR = 0x3300DDFF;
     private static final int FACE_LABEL_COLOR = 0x7700DDFF;
     private UUID playerId = null;
+    private boolean isVisible = true;
+    private boolean isSlim = false;
+    private boolean isGuideVisible = true;
 
     public PowderRoomScreen(UUID playerId) {
         super(Component.translatable("gui.tailormade.powder_room"));
@@ -140,12 +184,16 @@ public class PowderRoomScreen extends Screen {
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
-            PixelData existingData = SkinDataClientCache.get(mc.player.getUUID());
+            SkinDataRecord skin = SkinDataClientCache.get(mc.player.getUUID());
+            PixelData existingData = skin != null ? skin.pixelData() : null;
             int[] existing = existingData != null ? existingData.getPixels() : null;
             if (existing != null) {
                 canvas.loadPixels(existing);
             } else {
                 fillWithSampledSkinColor(mc.player);
+            }
+            if (skin != null) {
+                this.isVisible = skin.isVisible();
             }
 
             UnderwearSetting current = UnderwearDataClientCache.get(mc.player.getUUID());
@@ -154,17 +202,24 @@ public class PowderRoomScreen extends Screen {
                 selectedColor = current.color();
                 this.previewUnderwear = current;
             }
+
+            // モデル体型に応じて isSlim をセットする
+            PlayerSkin playerSkin = mc.player.getSkin();
+            PlayerSkin.Model playerModel = playerSkin.model();
+            if (playerModel.id().equals("slim")) {
+                this.isSlim = true;
+            }
         }
 
         PowderRoomEditableRegions.lockNonEditablePixels(canvas);
         canvas.setIsSkin(true);
 
         palette = new ColorPalette(leftPos + PAL_X, topPos + PAL_Y);
-        hueBar = new HueBarWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9 + 4);
-        hueBar.setH(32);
+        hueBar = new HueBarWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9);
+        hueBar.setH(57);
         hueBar.init();
-        colorPicker = new ColorPickerWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9 + 38);
-        colorPicker.setH(32);
+        colorPicker = new ColorPickerWidget(leftPos + PAL_X, topPos + PAL_Y + 8 * 9 + 57);
+        colorPicker.setH(57);
         colorPicker.init();
 
         int rgbBaseX = leftPos + 14;
@@ -192,25 +247,50 @@ public class PowderRoomScreen extends Screen {
         EditBox box = new EditBox(font, x, y, RGB_BOX_W, RGB_BOX_H, Component.literal(hint));
         box.setMaxLength(3);
         box.setValue("0");
+        box.setFilter(v -> v.matches("\\d+") && Integer.parseInt(v) < 256 && Integer.parseInt(v) >= 0);
         return box;
     }
 
     private void fillWithSampledSkinColor(AbstractClientPlayer player) {
-        int skinColor = 0xFFC8A882;
+        NativeImage src = readSkinPixels(player.getSkin().texture());
+        if (src == null) {
+            canvas.fill(0xFFC8A882);
+            return;
+        }
+        canvas.snapshot();
         try {
-            var texture = Minecraft.getInstance()
-                    .getTextureManager()
-                    .getTexture(player.getSkin().texture());
-            if (texture instanceof DynamicTexture dt && dt.getPixels() != null) {
-                int abgr = dt.getPixels().getPixelRGBA(9, 9);
-                int a = (abgr >> 24) & 0xFF;
-                int b = (abgr >> 16) & 0xFF;
-                int g = (abgr >>  8) & 0xFF;
-                int r =  abgr & 0xFF;
-                skinColor = (a << 24) | (r << 16) | (g << 8) | b;
+            int w = Math.min(src.getWidth(), 64);
+            int h = Math.min(src.getHeight(), 64);
+            for (int y = 0; y < h; y++) {
+                for (int x = 0; x < w; x++) {
+                    canvas.setPixel(x, y, abgrToArgb(src.getPixelRGBA(x, y)), 1);
+                }
             }
-        } catch (Exception ignored) {}
-        canvas.fill(skinColor);
+        } finally {
+            canvas.commitPendingAction();
+            src.close();
+        }
+    }
+
+    private static NativeImage readSkinPixels(ResourceLocation location) {
+        try {
+            RenderSystem.assertOnRenderThread();
+            AbstractTexture tex = Minecraft.getInstance().getTextureManager().getTexture(location);
+            NativeImage img = new NativeImage(64, 64, false);
+            tex.bind();
+            img.downloadTexture(0, false);
+            return img;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static int abgrToArgb(int abgr) {
+        int a = (abgr >> 24) & 0xFF;
+        int b = (abgr >> 16) & 0xFF;
+        int g = (abgr >>  8) & 0xFF;
+        int r =  abgr & 0xFF;
+        return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
     @Override
@@ -225,31 +305,85 @@ public class PowderRoomScreen extends Screen {
         renderRgbLabels(g);
         renderRgbBoxes(g, mouseX, mouseY, partialTick);
         renderToolabr(g);
+        renderToggleBtn(g);
+        renderSegmentBar(g);
 
         if (canvas != null) canvas.uploadIfDirty();
         saveButton.render(g, mouseX, mouseY, partialTick);
+    }
+
+    private void renderToggleBtn(GuiGraphics g) {
+        if (this.isVisible) {
+            g.blit(SKIN_TOGGLE_BTN_SHOW, leftPos + TOGGLE_X, topPos + TOGGLE_Y, 0, 0, TOGGLE_W, TOGGLE_H, TOGGLE_W, TOGGLE_H);
+        } else {
+            g.blit(SKIN_TOGGLE_BTN_HIDE, leftPos + TOGGLE_X, topPos + TOGGLE_Y, 0, 0, TOGGLE_W, TOGGLE_H, TOGGLE_W, TOGGLE_H);
+        }
     }
 
     private void renderToolabr(GuiGraphics g)
     {
         int toolBarX = this.leftPos + TOOLBAR_X;
         int toolBarY = this.topPos + TOOLBAR_Y;
-        g.blit(BRUSH_1_ICON, toolBarX, toolBarY, 0, 0, 10, 10, 10, 10);
-        g.blit(BRUSH_2_ICON, toolBarX, toolBarY + 13, 0, 0, 10, 10, 10, 10);
-        g.blit(BRUSH_3_ICON, toolBarX, toolBarY + 26, 0, 0, 10, 10, 10, 10);
-        g.blit(BUCKET_ICON, toolBarX, toolBarY + 39, 0, 0, 10, 10, 10, 10);
-        g.blit(EYEDROPPER_ICON, toolBarX, toolBarY + 52, 0, 0, 10, 10, 10, 10);
-        g.blit(ERASER_ICON, toolBarX, toolBarY + 65, 0, 0, 10, 10, 10, 10);
+        renderHalfSize(g, TOOL_ICON_BRUSH, toolBarX, toolBarY, 20, 20);
+        renderHalfSize(g, TOOL_ICON_ERASER, toolBarX, toolBarY + 12, 20, 20);
+        renderHalfSize(g, TOOL_ICON_BUCKET, toolBarX, toolBarY + 24, 20, 20);
+        renderHalfSize(g, TOOL_ICON_EYEDROPPER, toolBarX, toolBarY + 36, 20, 20);
 
         // アクティブ枠
-        int labelBorderColor = 0xFF44FF44;
         int toolBarActiveWidth = 12;
         int tollBarActiveX = toolBarX - 1;
-        int toolBarActiveY = TOOL_MODE == "eraser" ? toolBarY + 64 : TOOL_MODE == "eyedropper" ? toolBarY + 51 : TOOL_MODE == "bucket" ? toolBarY + 38 : BRUSH_SIZE == 1 ? toolBarY - 1 : BRUSH_SIZE == 2 ? toolBarY + 12 : BRUSH_SIZE == 3 ? toolBarY + 25 : toolBarY - 1;
+        int toolBarActiveY;
+        switch (TOOL_MODE) {
+            case "brush": toolBarActiveY = toolBarY - 1; break;
+            case "eraser": toolBarActiveY = toolBarY + 11; break;
+            case "bucket": toolBarActiveY = toolBarY + 23; break;
+            case "eyedropper": toolBarActiveY = toolBarY + 35; break;
+            default: toolBarActiveY = toolBarY - 1;
+        }
         g.fill(tollBarActiveX, toolBarActiveY, tollBarActiveX + toolBarActiveWidth, toolBarActiveY + 1, labelBorderColor);
         g.fill(tollBarActiveX,  toolBarActiveY + toolBarActiveWidth - 1, tollBarActiveX + toolBarActiveWidth, toolBarActiveY + toolBarActiveWidth, labelBorderColor);
         g.fill(tollBarActiveX, toolBarActiveY, tollBarActiveX + 1, toolBarActiveY + toolBarActiveWidth, labelBorderColor);
         g.fill(tollBarActiveX + toolBarActiveWidth - 1, toolBarActiveY, tollBarActiveX + toolBarActiveWidth, toolBarActiveY + toolBarActiveWidth, labelBorderColor);
+
+        // ブラシサイズ選択
+        renderHalfSize(g, TOOL_ICON_SIZE_1, toolBarX, toolBarY + 60, 20, 12);
+        renderHalfSize(g, TOOL_ICON_SIZE_2, toolBarX, toolBarY + 66, 20, 12);
+        renderHalfSize(g, TOOL_ICON_SIZE_3, toolBarX, toolBarY + 72, 20, 12);
+
+        // ブラシサイズ表示
+        switch (BRUSH_SIZE) {
+            case 1: toolBarActiveY = toolBarY + 59; break;
+            case 2: toolBarActiveY = toolBarY + 65; break;
+            case 3: toolBarActiveY = toolBarY + 71; break;
+            default: toolBarActiveY = toolBarY + 59;
+        }
+        g.fill(tollBarActiveX, toolBarActiveY, tollBarActiveX + toolBarActiveWidth, toolBarActiveY + 1, labelBorderColor);
+        g.fill(tollBarActiveX,  toolBarActiveY + 7, tollBarActiveX + toolBarActiveWidth, toolBarActiveY + 8, labelBorderColor);
+        g.fill(tollBarActiveX, toolBarActiveY, tollBarActiveX + 1, toolBarActiveY + 8, labelBorderColor);
+        g.fill(tollBarActiveX + toolBarActiveWidth - 1, toolBarActiveY, tollBarActiveX + toolBarActiveWidth, toolBarActiveY + 8, labelBorderColor);
+    }
+
+    private void renderSegmentBar(GuiGraphics g) {
+        int x = this.leftPos + SEG_BTN_X;
+        int y = this.topPos + SEG_BTN_Y;
+
+        g.blit(SEG_BUTTON_BASE, x, y, 0, 0, 68, 9, 68, 9);
+        if (!isSlim) {
+            g.blit(SEG_BUTTON_R, x + 20, y + 1, 0, 0, 13, 7, 13, 7);
+        } else {
+            g.blit(SEG_BUTTON_S, x + 34, y + 1, 0, 0, 17, 7, 17, 7);
+        }
+        if (!isGuideVisible) {
+            g.blit(SEG_BUTTON_N, x + 52, y + 1, 0, 0, 15, 7, 15, 7);
+        }
+    }
+
+    private void renderHalfSize(GuiGraphics g, ResourceLocation texture, int x, int y, int w, int h) {
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0);
+        g.pose().scale(0.5F, 0.5F, 1.0f);
+        g.blit(texture, 0, 0, 0, 0, w, h, w, h);
+        g.pose().popPose();
     }
 
     protected void renderBg(GuiGraphics g, float partialTick, int mouseX, int mouseY) {
@@ -281,24 +415,57 @@ public class PowderRoomScreen extends Screen {
 
         int[] hoverPx = screenToPixel(mouseX, mouseY, renderX, renderY, scale);
         if (hoverPx != null) {
-            int hx = renderX + (int)(hoverPx[0] * scale);
-            int hy = renderY + (int)(hoverPx[1] * scale);
-            g.fill(hx, hy, hx + (int)scale, hy + (int)scale, 0x55FFFFFF);
+            int hoverPixelColor = canvas.getPixel(hoverPx[0], hoverPx[1]);
+            float brightness = ColorService.getBrightness(hoverPixelColor);
+            int hoverColor = brightness >= 0.5 ? 0x55000000 : 0x55ffffff;
+            int hx = getRenderingX(hoverPx[0]);
+            int hy = getRenderingY(hoverPx[1]);
+            if (BRUSH_SIZE == 3) {
+                hx -= (int)scale;
+                hy -= (int)scale;
+            }
+            int maxHx = hx + (int)(scale * BRUSH_SIZE);
+            int maxHy = hy + (int)(scale * BRUSH_SIZE);
+            g.fill(hx, hy, maxHx, maxHy, hoverColor);
+
+            if (canDrawLine()) {
+                canvas.calculateLine(hoverPx[0], hoverPx[1]);
+                for (int[] line: canvas.getPreviewLinePixels()) {
+                    int lineHoverPixelColor = canvas.getPixel(line[0], line[1]);
+                    float lineBrightness = ColorService.getBrightness(lineHoverPixelColor);
+                    int lineHoverColor = lineBrightness >= 0.5 ? 0x55000000 : 0x55ffffff;
+                    int lX = getRenderingX(line[0]);
+                    int lY = getRenderingY(line[1]);
+                    int maxLX = lX + (int)(scale * 1);
+                    int maxLY = lY + (int)(scale * 1);
+                    g.fill(lX, lY, maxLX, maxLY, lineHoverColor);
+                }
+            }
         }
 
         renderFaceGuidelines(g, renderX, renderY, scale);
         g.disableScissor();
     }
 
+    private int getRenderingX(int original) {
+        return currentRenderXY()[0] + (int)(original * currentScale());
+    }
+    private int getRenderingY(int original) {
+        return currentRenderXY()[1] + (int)(original * currentScale());
+    }
+
     private void drawGrid(GuiGraphics g, int rx, int ry, int rw, int rh, float scale) {
         int gridColor = 0x33FFFFFF;
+        int gridSubColor = 0x33000000;
         for (int x = 0; x <= canvas.getWidth(); x++) {
             int lx = rx + (int)(x * scale);
             g.fill(lx, ry, lx + 1, ry + rh, gridColor);
+            g.fill(lx - 1, ry, lx, ry + rh, gridSubColor);
         }
         for (int y = 0; y <= canvas.getHeight(); y++) {
             int ly = ry + (int)(y * scale);
             g.fill(rx, ly, rx + rw, ly + 1, gridColor);
+            g.fill(rx, ly - 1, rx + rw, ly, gridSubColor);
         }
     }
 
@@ -375,6 +542,12 @@ public class PowderRoomScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
+        // フォーム入力時、フォーム以外をクリックしたらフォーカスを外す
+        if (button == 0 && this.isRGBFocused() && !inRGBBox(mx, my)) {
+            this.rBox.setFocused(false);
+            this.gBox.setFocused(false);
+            this.bBox.setFocused(false);
+        }
         if (palette.mouseClicked(mx, my)) {
             clickedArea = "palette";
             syncRgbBoxes();
@@ -420,27 +593,54 @@ public class PowderRoomScreen extends Screen {
             return true;
         }
 
+        if (inBrushSizebar(mx, my)) {
+            clickedArea = "brushsizebar";
+            mouseClickedOnBrushSizeBar(mx, my);
+            return true;
+        }
+        if (button == 0 && inToggleBox(mx, my)) {
+            this.isVisible = !this.isVisible;
+        }
+        if (button == 0 && inSegmentButton(mx, my)) {
+            mouseClickedOnSegBar(mx, my);
+            return true;
+        }
+
         clickedArea = null;
         return super.mouseClicked(mx, my, button);
     }
 
     private void mouseClickedOnToolBar(double mx, double my) {
         if (mx >= (this.leftPos + TOOLBAR_X) && mx <= (this.leftPos + TOOLBAR_X + 10) && my >= (this.topPos + TOOLBAR_Y) && my <= (this.topPos + TOOLBAR_Y + 10)) {
+            setToolMode("brush");
+        } else if (mx >= (this.leftPos + TOOLBAR_X) && mx <= (this.leftPos + TOOLBAR_X + 10) && my >= (this.topPos + TOOLBAR_Y + 12) && my <= (this.topPos + TOOLBAR_Y + 20)) {
+            setToolMode("eraser");
+        } else if (mx >= (this.leftPos + TOOLBAR_X) && mx <= (this.leftPos + TOOLBAR_X + 10) && my >= (this.topPos + TOOLBAR_Y + 24) && my <= (this.topPos + TOOLBAR_Y + 34)) {
+            setToolMode("bucket");
+        } else if (mx >= (this.leftPos + TOOLBAR_X) && mx <= (this.leftPos + TOOLBAR_X + 10) && my >= (this.topPos + TOOLBAR_Y + 36) && my <= (this.topPos + TOOLBAR_Y + 46)) {
+            setToolMode("eyedropper");
+        }
+    }
+
+    private void mouseClickedOnBrushSizeBar(double mx, double my) {
+        int startY = this.topPos + TOOLBAR_Y + 60;
+        if (mx >= (this.leftPos + TOOLBAR_X) && mx <= (this.leftPos + TOOLBAR_X + 10) && my >= (startY) && my <= (startY + 5)) {
             BRUSH_SIZE = 1;
-            TOOL_MODE = "brush";
-        } else if (mx >= (this.leftPos + TOOLBAR_X) && mx <= (this.leftPos + TOOLBAR_X + 10) && my >= (this.topPos + TOOLBAR_Y + 13) && my <= (this.topPos + TOOLBAR_Y + 23)) {
+        } else if (mx >= (this.leftPos + TOOLBAR_X) && mx <= (this.leftPos + TOOLBAR_X + 10) && my >= (startY + 6) && my <= (startY + 11)) {
             BRUSH_SIZE = 2;
-            TOOL_MODE = "brush";
-        } else if (mx >= (this.leftPos + TOOLBAR_X) && mx <= (this.leftPos + TOOLBAR_X + 10) && my >= (this.topPos + TOOLBAR_Y + 26) && my <= (this.topPos + TOOLBAR_Y + 36)) {
+        } else if (mx >= (this.leftPos + TOOLBAR_X) && mx <= (this.leftPos + TOOLBAR_X + 10) && my >= (startY + 12) && my <= (startY + 17)) {
             BRUSH_SIZE = 3;
-            TOOL_MODE = "brush";
-        } else if (mx >= (this.leftPos + TOOLBAR_X) && mx <= (this.leftPos + TOOLBAR_X + 10) && my >= (this.topPos + TOOLBAR_Y + 39) && my <= (this.topPos + TOOLBAR_Y + 49)) {
-            TOOL_MODE = "bucket";
-        } else if (mx >= (this.leftPos + TOOLBAR_X) && mx <= (this.leftPos + TOOLBAR_X + 10) && my >= (this.topPos + TOOLBAR_Y + 52) && my <= (this.topPos + TOOLBAR_Y + 62)) {
-            beforeEyedropperTool = TOOL_MODE;
-            TOOL_MODE = "eyedropper";
-        } else if (mx >= (this.leftPos + TOOLBAR_X) && mx <= (this.leftPos + TOOLBAR_X + 10) && my >= (this.topPos + TOOLBAR_Y + 65) && my <= (this.topPos + TOOLBAR_Y + 75)) {
-            TOOL_MODE = "eraser";
+        }
+    }
+
+    private void mouseClickedOnSegBar(double mx, double my) {
+        int startX = this.leftPos + SEG_BTN_X + 20;
+        if (mx >= startX && mx <= startX + 13) {
+            isSlim = false;
+        } else if (mx >= startX + 14 && mx <= startX + 31) {
+            isSlim = true;
+        } else if (mx >= startX + 32 && mx <= startX + 46) {
+            isGuideVisible = !isGuideVisible;
         }
     }
 
@@ -513,6 +713,9 @@ public class PowderRoomScreen extends Screen {
     public boolean mouseReleased(double mx, double my, int button) {
         if (button == 0) { dragStartX = -1; dragStartY = -1; }
         if (button == 1) { rightDragStartX = -1; rightDragStartY = -1; }
+        if ("editor".equals(clickedArea) && canvas != null) {
+            canvas.commitPendingAction();
+        }
         clickedArea = null;
         hueBar.mouseReleased();
         colorPicker.mouseReleased();
@@ -521,6 +724,9 @@ public class PowderRoomScreen extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (this.isRGBFocused()) {
+            return super.keyPressed(keyCode, scanCode, modifiers);
+        }
         boolean ctrl = (modifiers & org.lwjgl.glfw.GLFW.GLFW_MOD_CONTROL) != 0;
         boolean shift = (modifiers & org.lwjgl.glfw.GLFW.GLFW_MOD_SHIFT) != 0;
         if (ctrl && keyCode == org.lwjgl.glfw.GLFW.GLFW_KEY_Z) {
@@ -565,6 +771,10 @@ public class PowderRoomScreen extends Screen {
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
+    private boolean canDrawLine() {
+        return canvas != null && canvas.drawLine() && Screen.hasShiftDown();
+    }
+
     private void applyBrush(double mx, double my) {
         float scale = currentScale();
         int[] rxy = currentRenderXY();
@@ -587,6 +797,7 @@ public class PowderRoomScreen extends Screen {
             palette.syncRgbFromColor();
             hueBar.setHueFromColor(color);
             colorPicker.setSelectedColor(color);
+            syncRgbBoxes();
             if (beforeEyedropperTool != null) {
                 TOOL_MODE = beforeEyedropperTool;
             }
@@ -594,14 +805,32 @@ public class PowderRoomScreen extends Screen {
             if (TOOL_MODE == "bucket") {
                 canvas.fill(px[0], px[1], palette.getSelectedColor());
             } else {
-                if (TOOL_MODE == "eraser") {
-                    canvas.erase(px[0], px[1], BRUSH_SIZE);
+                int color = TOOL_MODE.equals("eraser") ? TRANSPARENT : palette.getSelectedColor();
+                if (canDrawLine()) {
+                    canvas.commitLine(px[0], px[1], color, BRUSH_SIZE);
                 } else {
-                    canvas.setPixel(px[0], px[1], palette.getSelectedColor(), BRUSH_SIZE);
+                    canvas.setPixel(px[0], px[1], color, BRUSH_SIZE);
                 }
+                canvas.setLastPixel(px[0], px[1]);
             }
         }
         hasUnsavedChanges = true;
+    }
+
+    private void setToolMode(String mode) {
+        if (canvas != null) {
+            // 範囲選択じゃない場合は範囲選択用設定をクリアする
+            if (!mode.equals("selection")) {
+                canvas.clearSelection();
+            }
+            // ブラシ・消しゴム以外の場合＆ツール変更の場合は直線引く用の前座標を削除する
+            if (!mode.equals("eraser") && !mode.equals("brush")) {
+                canvas.clearLastPixel();
+            } else if (!Objects.equals(TOOL_MODE, mode)) {
+                canvas.clearLastPixel();
+            }
+        }
+        TOOL_MODE = mode;
     }
 
     private boolean isHeadArea(int px, int py) {
@@ -615,7 +844,7 @@ public class PowderRoomScreen extends Screen {
 
     private void onSave() {
         if (canvas == null) return;
-        NetworkManager.sendToServer(new SaveSkinLayerPayload(canvas.getPixels()));
+        NetworkManager.sendToServer(new SaveSkinLayerPayload(canvas.getPixels(), this.isVisible));
         hasUnsavedChanges = false;
         onClose();
     }
@@ -641,6 +870,18 @@ public class PowderRoomScreen extends Screen {
         };
     }
 
+    private boolean isRGBFocused() {
+        return this.rBox.isFocused() || this.gBox.isFocused() || this.bBox.isFocused();
+    }
+    private boolean inRGBBox(double mx, double my) {
+        int rgbBaseX = leftPos + 14;
+        int rgbY = topPos + ED_Y + ED_H + RGB_Y_OFFSET;
+        return (
+                inBox(mx, my, rgbBaseX, rgbY, RGB_BOX_W, RGB_BOX_H) ||
+                        inBox(mx, my, rgbBaseX + RGB_BOX_W + 6, rgbY, RGB_BOX_W, RGB_BOX_H) ||
+                        inBox(mx, my, rgbBaseX + (RGB_BOX_W * 2) + 12, rgbY, RGB_BOX_W, RGB_BOX_H)
+        );
+    }
     private boolean inEditorArea(double mx, double my) {
         return mx >= leftPos + ED_X && mx < leftPos + ED_X + ED_W && my >= topPos + ED_Y && my < topPos + ED_Y + ED_H;
     }
@@ -648,7 +889,16 @@ public class PowderRoomScreen extends Screen {
         return mx >= leftPos + PV_X && mx < leftPos + PV_X + PV_W && my >= topPos + PV_Y && my < topPos + PV_Y + PV_H;
     }
     private boolean inToolbar(double mx, double my) {
-        return inBox(mx, my, leftPos + TOOLBAR_X, topPos + TOOLBAR_Y, 16, 186);
+        return inBox(mx, my, leftPos + TOOLBAR_X, topPos + TOOLBAR_Y, 16, 46);
+    }
+    private boolean inBrushSizebar(double mx, double my) {
+        return inBox(mx, my, leftPos + TOOLBAR_X, topPos + TOOLBAR_Y + 60, 16, 18);
+    }
+    private boolean inSegmentButton(double mx, double my) {
+        return inBox(mx, my, leftPos + SEG_BTN_X, topPos + SEG_BTN_Y, 68, 9);
+    }
+    private boolean inToggleBox(double mx, double my) {
+        return inBox(mx, my, leftPos + TOGGLE_X, topPos + TOGGLE_Y, TOGGLE_W, TOGGLE_H);
     }
     private boolean inBox(double mx, double my, int bx, int by, int w, int h) {
         return mx >= bx && mx < bx + w && my >= by && my < by + h;
@@ -680,12 +930,16 @@ public class PowderRoomScreen extends Screen {
     }
     private void onRgbEdited() {
         try {
-            palette.setRgb(
-                    Integer.parseInt(rBox.getValue()),
-                    Integer.parseInt(gBox.getValue()),
-                    Integer.parseInt(bBox.getValue()));
+            int r = Integer.parseInt(rBox.getValue());
+            int g = Integer.parseInt(gBox.getValue());
+            int b = Integer.parseInt(bBox.getValue());
+            palette.setRgb(r, g, b);
+            int color = palette.getSelectedColor();
+            hueBar.setHueFromColor(color);
+            colorPicker.setSelectedColor(color);
         } catch (NumberFormatException ignored) {}
     }
+
     private void syncRgbBoxes() {
         if (palette.isEraserMode()) return;
         int r = palette.getRValue();
@@ -710,7 +964,8 @@ public class PowderRoomScreen extends Screen {
 
     private void renderFaceGuidelines(GuiGraphics g, int renderX, int renderY, float scale) {
         if (canvas == null) return;
-        List<FaceRegion> regions = getFaceRegions();
+        if (!this.isGuideVisible) return;
+        List<FaceRegion> regions = this.isSlim ? getSlimRegions() : getFaceRegions();
 
         for (FaceRegion r : regions) {
             int sx = renderX + (int)(r.cx * scale);
@@ -769,6 +1024,45 @@ public class PowderRoomScreen extends Screen {
                     new FaceRegion(20,  52,  4, 12, "L Leg Front"),
                     new FaceRegion(24,  52,  4, 12, "L Leg L"),
                     new FaceRegion(28,  52,  4, 12, "L Leg Back")
+        );
+    }
+    private List<FaceRegion> getSlimRegions() {
+        return List.of(
+                // 胴体スキン
+                new FaceRegion(20,  16,  8,  4, "Body Top"),
+                new FaceRegion(28,  16,  8,  4, "Body Bot"),
+                new FaceRegion(16,  20,  4, 12, "Body R"),
+                new FaceRegion(20,  20,  8, 12, "Body Front"),
+                new FaceRegion(28,  20,  4, 12, "Body L"),
+                new FaceRegion(32,  20,  8, 12, "Body Back"),
+                // 右腕スキン
+                new FaceRegion(44,  16,  3,  4, "R Arm Top"),
+                new FaceRegion(47,  16,  3,  4, "R Arm Bot"),
+                new FaceRegion(40,  20,  4, 12, "R Arm R"),
+                new FaceRegion(44,  20,  3, 12, "R Arm Front"),
+                new FaceRegion(47,  20,  4, 12, "R Arm L"),
+                new FaceRegion(51,  20,  3, 12, "R Arm Back"),
+                // 左腕スキン
+                new FaceRegion(36,  48,  3,  4, "L Arm Top"),
+                new FaceRegion(39,  48,  3,  4, "L Arm Bot"),
+                new FaceRegion(32,  52,  4, 12, "L Arm R"),
+                new FaceRegion(36,  52,  3, 12, "L Arm Front"),
+                new FaceRegion(39,  52,  4, 12, "L Arm L"),
+                new FaceRegion(43,  52,  3, 12, "L Arm Back"),
+                // 右足スキン
+                new FaceRegion( 4,  16,  4,  4, "R Leg Top"),
+                new FaceRegion( 8,  16,  4,  4, "R Leg Bot"),
+                new FaceRegion( 0,  20,  4, 12, "R Leg R"),
+                new FaceRegion( 4,  20,  4, 12, "R Leg Front"),
+                new FaceRegion( 8,  20,  4, 12, "R Leg L"),
+                new FaceRegion(12,  20,  4, 12, "R Leg Back"),
+                // 左足スキン
+                new FaceRegion(20,  48,  4,  4, "L Leg Top"),
+                new FaceRegion(24,  48,  4,  4, "L Leg Bot"),
+                new FaceRegion(16,  52,  4, 12, "L Leg R"),
+                new FaceRegion(20,  52,  4, 12, "L Leg Front"),
+                new FaceRegion(24,  52,  4, 12, "L Leg L"),
+                new FaceRegion(28,  52,  4, 12, "L Leg Back")
         );
     }
 }
