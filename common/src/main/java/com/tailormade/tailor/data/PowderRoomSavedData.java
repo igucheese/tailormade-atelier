@@ -1,6 +1,7 @@
 package com.tailormade.tailor.data;
 
 import com.tailormade.tailor.data.records.PixelData;
+import com.tailormade.tailor.data.records.SkinDataRecord;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntArrayTag;
@@ -34,9 +35,11 @@ public class PowderRoomSavedData extends SavedData {
                 );
     }
 
-    public void setSkinLayer(UUID uuid, PixelData data) {
-        skinLayers.put(uuid, new SkinDataRecord(uuid, data));
+    public SkinDataRecord setSkinLayer(UUID uuid, PixelData data, boolean isVisible) {
+        SkinDataRecord skin = new SkinDataRecord(uuid, data, isVisible);
+        skinLayers.put(uuid, skin);
         setDirty();
+        return skin;
     }
 
     public PixelData getSkinLayer(UUID uuid) {
@@ -77,38 +80,5 @@ public class PowderRoomSavedData extends SavedData {
         tag.put("PowderRoom", listTag);
         System.out.println("[Tailormade][SKIN_DATA] saving skins; targets: " + this.skinLayers.size());
         return tag;
-    }
-
-    public record SkinDataRecord(
-            UUID uuid,
-            PixelData pixelData
-    ) {
-        public CompoundTag save() {
-            CompoundTag nbt = new CompoundTag();
-            nbt.putUUID("uuid", uuid);
-            nbt.put("pixelData", new IntArrayTag(pixelData.getPixels()));
-            return nbt;
-        }
-
-        public static SkinDataRecord load(CompoundTag nbt) {
-            UUID uuid = nbt.getUUID("uuid");
-            int[] pixels = nbt.getIntArray("pixelData");
-            PixelData pixelData = new PixelData(pixels);
-
-            return new SkinDataRecord(uuid, pixelData);
-        }
-
-        public static final StreamCodec<RegistryFriendlyByteBuf, SkinDataRecord> STREAM_CODEC = StreamCodec.of(
-                (buf, info) -> {
-                    buf.writeUUID(info.uuid());
-                    PixelData.STREAM_CODEC.encode(buf, info.pixelData());
-                },
-                buf -> {
-                    return new SkinDataRecord(
-                            buf.readUUID(),
-                            PixelData.STREAM_CODEC.decode(buf)
-                    );
-                }
-        );
     }
 }

@@ -2,6 +2,7 @@ package com.tailormade.tailor.network;
 
 import com.tailormade.tailor.data.PowderRoomSavedData;
 import com.tailormade.tailor.data.records.PixelData;
+import com.tailormade.tailor.data.records.SkinDataRecord;
 import com.tailormade.tailor.network.payloads.SaveSkinLayerPayload;
 import com.tailormade.tailor.network.payloads.SyncSkinLayerPayload;
 import dev.architectury.networking.NetworkManager;
@@ -15,10 +16,9 @@ public class SaveSkinLayerPayloadHandler {
             if (packet.pixels().length != 64 * 64) return;
 
             ServerLevel overworld = player.getServer().overworld();
-            PowderRoomSavedData.get(overworld).setSkinLayer(player.getUUID(), new PixelData(packet.pixels()));
+            SkinDataRecord skin = PowderRoomSavedData.get(overworld).setSkinLayer(player.getUUID(), new PixelData(packet.pixels()), packet.isVisible());
 
-            SyncSkinLayerPayload syncPacket =
-                    new SyncSkinLayerPayload(player.getUUID(), packet.pixels());
+            SyncSkinLayerPayload syncPacket = new SyncSkinLayerPayload(player.getUUID(), skin);
             NetworkManager.sendToPlayers(overworld.players(), syncPacket);
         });
     }

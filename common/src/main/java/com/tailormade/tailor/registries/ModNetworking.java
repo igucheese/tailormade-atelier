@@ -77,6 +77,7 @@ public class ModNetworking {
         NetworkManager.registerS2CPayloadType(SyncAllCatalogsPayload.TYPE, SyncAllCatalogsPayload.STREAM_CODEC);
         NetworkManager.registerS2CPayloadType(OpenCatalogPayload.TYPE, OpenCatalogPayload.STREAM_CODEC);
         NetworkManager.registerS2CPayloadType(CloseDesignScreenPayload.TYPE, CloseDesignScreenPayload.STREAM_CODEC);
+        NetworkManager.registerS2CPayloadType(SyncSkinLayerRemovePayload.TYPE, SyncSkinLayerRemovePayload.STREAM_CODEC);
     }
 
     public static void registerClientReceivers() {
@@ -113,5 +114,8 @@ public class ModNetworking {
         NetworkManager.registerReceiver(NetworkManager.Side.S2C,
                 CloseDesignScreenPayload.TYPE, CloseDesignScreenPayload.STREAM_CODEC,
                 CloseDesignScreenPayload::handle);
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C,
+                SyncSkinLayerRemovePayload.TYPE, SyncSkinLayerRemovePayload.STREAM_CODEC,
+                SyncSkinLayerRemovePayload::handle);
     }
 }
