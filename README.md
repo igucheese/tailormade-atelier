@@ -14,7 +14,6 @@
 </p>
 
 <p><strong>Notice</strong>: Any bug reports and suggestions to improve the mod are always welcome!</p>
-<p>[Wiki](https://github.com/igucheese/tailormade-atelier/wiki) / [Issue Tracker](https://github.com/igucheese/tailormade-atelier/issues)</p>
 
 ## Overview
 
