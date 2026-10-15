@@ -5,9 +5,12 @@ import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.tailormade.tailor.config.TailormadeServerConfig;
 import com.tailormade.tailor.data.DesignData;
+import com.tailormade.tailor.data.PowderRoomSavedData;
 import com.tailormade.tailor.data.records.DesignDataRecord;
+import com.tailormade.tailor.network.payloads.SyncSkinLayerRemovePayload;
 import com.tailormade.tailor.utils.OldDataMerger;
 import com.tailormade.tailor.utils.files.TemplateConverter;
+import dev.architectury.networking.NetworkManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
@@ -15,6 +18,7 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -27,41 +31,48 @@ public final class TailormadeCommandRegistry {
 
     public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("tailormade")
-                .requires(source -> source.hasPermission(2))
-                .then(Commands.literal("getAllPatterns")
-                        .executes(context -> getAllPatterns(context.getSource()))
-                )
-                .then(Commands.literal("oldData")
-                        .then(Commands.literal("count")
-                                .executes(context -> countOldData(context.getSource()))
-                        )
-                        .then(Commands.literal("merge")
-                                .executes(context -> mergeOldData(context.getSource()))
-                        )
-                        .then(Commands.literal("cleanUp")
-                                .executes(context -> cleanUpOldData(context.getSource()))
+                .then(Commands.literal("skin")
+                        .then(Commands.literal("delete")
+                                .executes(context -> deleteSkin(context.getSource()))
                         )
                 )
-                .then(Commands.literal("create")
-                        .then(Commands.literal("template")
-                                .then(Commands.argument("inputFileName", StringArgumentType.string())
-                                        .then(Commands.argument("outputFileName", StringArgumentType.string())
-                                                .executes(context -> {
-                                                    String inputFileName = StringArgumentType.getString(context, "inputFileName");
-                                                    String outputFileName = StringArgumentType.getString(context, "outputFileName");
-                                                    return createPatternTemplate(context.getSource(), inputFileName, outputFileName);
-                                                })
+                .then(Commands.literal("admin")
+                        .requires(source -> source.hasPermission(2))
+                        .then(Commands.literal("getAllPatterns")
+                                .executes(context -> getAllPatterns(context.getSource()))
+                        )
+                        .then(Commands.literal("oldData")
+                                .then(Commands.literal("count")
+                                        .executes(context -> countOldData(context.getSource()))
+                                )
+                                .then(Commands.literal("merge")
+                                        .executes(context -> mergeOldData(context.getSource()))
+                                )
+                                .then(Commands.literal("cleanUp")
+                                        .executes(context -> cleanUpOldData(context.getSource()))
+                                )
+                        )
+                        .then(Commands.literal("create")
+                                .then(Commands.literal("template")
+                                        .then(Commands.argument("inputFileName", StringArgumentType.string())
+                                                .then(Commands.argument("outputFileName", StringArgumentType.string())
+                                                        .executes(context -> {
+                                                            String inputFileName = StringArgumentType.getString(context, "inputFileName");
+                                                            String outputFileName = StringArgumentType.getString(context, "outputFileName");
+                                                            return createPatternTemplate(context.getSource(), inputFileName, outputFileName);
+                                                        })
+                                                )
                                         )
                                 )
                         )
-                )
-                .then(Commands.literal("set")
-                        .then(Commands.literal("dyeCost")
-                                .then(Commands.argument("multiplier", FloatArgumentType.floatArg())
-                                        .executes(context -> {
-                                            float multiplier = FloatArgumentType.getFloat(context, "multiplier");
-                                            return setDyeCostMultiplier(context.getSource(), multiplier);
-                                        })
+                        .then(Commands.literal("set")
+                                .then(Commands.literal("dyeCost")
+                                        .then(Commands.argument("multiplier", FloatArgumentType.floatArg())
+                                                .executes(context -> {
+                                                    float multiplier = FloatArgumentType.getFloat(context, "multiplier");
+                                                    return setDyeCostMultiplier(context.getSource(), multiplier);
+                                                })
+                                        )
                                 )
                         )
                 )
@@ -134,6 +145,15 @@ public final class TailormadeCommandRegistry {
     private static int setDyeCostMultiplier(CommandSourceStack source, float multiplier) {
         TailormadeServerConfig.DYE_COST_MULTIPLIER.set(multiplier);
         source.sendSuccess(() -> Component.translatable("command.tailormade.set.dyecost.done", multiplier), true);
+        return 1;
+    }
+
+    private static int deleteSkin(CommandSourceStack source) {
+        ServerPlayer player = source.getPlayer();
+        ServerLevel level = player.serverLevel();
+        PowderRoomSavedData.get(level).removeSkinLayer(player.getUUID());
+        NetworkManager.sendToPlayer(player, new SyncSkinLayerRemovePayload(player.getUUID()));
+        source.sendSuccess(() -> Component.translatable("command.tailormade.skin.delete.done"), true);
         return 1;
     }
 }

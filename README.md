@@ -1,47 +1,60 @@
-<p align="center"><img src="./.idea/icon.png" alt="Logo" width="200"></p>
+<p align="center"><img src="./.idea/icon.png" alt="Logo" width="160"></p>
 <h1 align="center">Tailormade<br></h1>
 
-<p>Customize your clothing freely with the Tailormade Mod!</p>
-<p>This mod allows you to design original skins using an in-game editor and attach them directly to your armor.</p>
+<p align="center">
+  <strong>An in-game clothing customization mod for Minecraft.</strong><br>
+  Design original armor skins pixel-by-pixel right inside the game!
+</p>
 
-<p><strong>Notice</strong>: This mod is still in its early alpha stages, so it may contain bugs or unexpected behaviors.<br>
-Please back up your worlds just in case!<br>
-Any bug reports and suggestions to improve the mod are always welcome!</p>
+<p align="center">
+  <a href="https://github.com/igucheese/tailormade-atelier/releases"><img src="https://img.shields.io/github/v/release/igucheese/tailormade-atelier?label=Release&style=flat-square" alt="Release"></a>
+  <a href="https://github.com/igucheese/tailormade-atelier/blob/main/LICENSE"><img src="https://img.shields.io/github/license/igucheese/tailormade-atelier?style=flat-square" alt="License"></a>
+  <a href="https://curseforge.com/minecraft/mc-mods/tailormade"><img src="https://cf.way2muchnoise.eu/tailormade.svg" alt="CurseForge"></a>
+  <a href="https://modrinth.com/mod/tailormade"><img src="https://img.shields.io/modrinth/dt/tailormade?label=Modrinth&style=flat-square" alt="Modrinth"></a>
+</p>
 
-<h2 align="center">Features</h2>
-<ul>
-<li><strong>In-Game Clothing Design</strong>: Instantly replace the appearance of your armor with skins designed entirely in-game.</li>
-<li><strong>Style Meets Substance</strong>: Change only the visual look of your gear while keeping all the vanilla stats and perks of your armor!</li>
-<li><strong>Easy Reversibility</strong>: By simply using a Bleach, you can strip the custom texture away and revert it back to standard armor.</li>
-<li><strong>Design Sharing</strong>: Easily export and import your designs to share with other players!</li>
-</ul>
+<p><strong>Notice</strong>: Any bug reports and suggestions to improve the mod are always welcome!</p>
 
-<h2 align="center">Added Items</h2>
-<ul>
-<li><strong>Hat Pattern</strong>: A clothing pattern used to edit the skin layer for your head.</li>
-<li><strong>Shirt Pattern</strong>: A clothing pattern used to edit the skin layer for your torso and arms.</li>
-<li><strong>Pants Pattern</strong>: A clothing pattern used to edit the skin layer for your legs.</li>
-<li><strong>Shoes Pattern</strong>: A clothing pattern used to edit the skin layer for your feet.</li>
-<li><strong>Bleach</strong>: An item to un-dye tailored armor, can be crafted with a Water Bucket, Nether Quartz, and Redstone.</li>
-<li><strong>Catalog</strong>: An item linked to a specific Showcase, allowing players to access and browse its contents from anywhere.</li>
-</ul>
-<p>* All patterns can be crafted with a paper and a black dye, and interchangeable for each other.</p>
+## Overview
 
-<h2 align="center">Added Blocks</h2>
-<h3 align="center">The Crafting Stations</h3>
-<ul>
-<li><strong>Design Table</strong>: Insert a pattern here to open the custom pixel editor and sketch your design for that specific clothing piece.</li>
-<li><strong>Tailoring Station</strong>: Combine a completed pattern, a matching piece of armor, and the required dyes (Red, Green, Blue) to apply your custom design to the gear.</li>
-<li><strong>Bleaching Counter</strong>: Craft a bleach and use this station to safely restore tailored armor to its original, un-dyed form.</li>
-</ul>
-<h3 align="center">Wardrobe & Display</h3>
-<ul>
-<li><strong>Dresser</strong>: A dedicated design editor for customizing your inner skin layer. This layer will seamlessly render beneath any exposed or cut-out areas of your custom clothing.</li>
-<li><strong>Wardrobe</strong>: A specialized GUI block where you can choose and fine-tune your underwear style and color palette.</li>
-<li><strong>Mannequin</strong>: A display stand to showcase your original designs.</li>
-<li><strong>Showcase</strong>: A display case to feature and store your favorite custom designs.</li>
-</ul>
-<h3 align="center">Management</h3>
-<ul>
-<li><strong>Pattern Manager</strong>: A management station that allows you to copy, lock (protect), rename, export, import, and extract your created patterns.</li>
-</ul>
+**Tailormade** allows players to replace the visual appearance of their armor with custom pixel art created via in-game editors, while strictly preserving its original stats, perks, and enchantments.
+
+- **Multi-Loader Support**: Built using Architectury API for seamless NeoForge and Fabric compatibility.
+- **In-Game Editor**: Features layer management (up to 8 layers), selection tool, line drawing, and custom color palettes.
+- **NBT Pattern Sharing**: Export/Import pattern designs as NBT files to share with other players.
+- **Visual Display**: Showcasing features via Mannequins, Showcases, and Catalogs.
+---
+
+##  Requirements & Dependencies
+
+- **Minecraft**: 1.21.1
+- **Java**: 21+
+- **Mod Loaders**: NeoForge / Fabric
+- **Required Dependency**: [Architectury API](https://curseforge.com/minecraft/mc-mods/architectury-api)
+
+### Confirmed Compatibility
+Tested and confirmed working with:
+- **Shaders / Rendering**: Sodium, Lithium, Iris, EMF (Entity Model Features), ETF (Entity Texture Features)
+- **Utilities**: Cosmetic Armor Reworked, Mod Menu
+
+---
+
+## Building from Source
+
+To clone and build Tailormade locally, run the following commands:
+
+```bash
+git clone https://github.com/igucheese/tailormade-atelier.git
+cd tailormade-atelier
+./gradlew build
+```
+
+### NeoForge Run
+```bash
+./gradlew neoforge:runClient
+```
+
+### Fabric Run
+```bash
+./gradlew fabric:runClient
+```

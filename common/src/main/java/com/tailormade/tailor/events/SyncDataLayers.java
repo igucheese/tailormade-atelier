@@ -23,12 +23,12 @@ public class SyncDataLayers {
     }
 
     public static void syncSkinLayer(ServerPlayer player) {
-        Collection<PowderRoomSavedData.SkinDataRecord> skins = PowderRoomSavedData.get((ServerLevel) player.level()).getAll();
-        for (PowderRoomSavedData.SkinDataRecord record : skins) {
+        Collection<SkinDataRecord> skins = PowderRoomSavedData.get((ServerLevel) player.level()).getAll();
+        for (SkinDataRecord record : skins) {
             PixelData skin = record.pixelData();
             if (skin.getPixels() != null) {
                 Tailormade.LOGGER.info("[SYNC_SKINS] Sync Player's Skin: " + record.uuid());
-                NetworkManager.sendToPlayer(player, new SyncSkinLayerPayload(record.uuid(), skin.getPixels()));
+                NetworkManager.sendToPlayer(player, new SyncSkinLayerPayload(record.uuid(), record));
             } else {
                 Tailormade.LOGGER.info("[SYNC_SKINS] Sync Player's Skin has been skipped.");
             }
